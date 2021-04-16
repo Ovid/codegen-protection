@@ -2,7 +2,7 @@
 
 use lib 'lib';
 use Test::Most;
-use Perl::Rewrite;
+use CodeGen::Protection::Perl;
 
 sub is_multiline_text ($$$) {
     my ( $text, $expected, $message ) = @_;
@@ -13,7 +13,7 @@ sub is_multiline_text ($$$) {
 }
 
 my $existing_code = <<'END';
-#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
+#<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
     my $total = 0;
@@ -21,7 +21,7 @@ sub sum {
     return $total;
 }
 
-#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 END
 
 my $injected_code = <<'END';
@@ -33,7 +33,7 @@ sub sum {
 END
 
 throws_ok {
-    Perl::Rewrite->new(
+    CodeGen::Protection::Perl->new(
         existing_code => $existing_code,
         injected_code => $injected_code,
     )
@@ -54,7 +54,7 @@ sub sum { my $total = 0; $total += $_ foreach @_; return $total; }
 END
 
 throws_ok {
-    Perl::Rewrite->new(
+    CodeGen::Protection::Perl->new(
         existing_code => $existing_code,
         injected_code => $injected_code,
     )
@@ -65,7 +65,7 @@ qr/Could not find start and end markers in text/,
 $existing_code = <<'END';
 my $bar = 1;
 
-#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
+#<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
     my $total = 0;
@@ -73,7 +73,7 @@ sub sum {
     return $total;
 }
 
-#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
+#>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
 
 my $foo = 1;
 END
@@ -83,7 +83,7 @@ my $injected_code = foo();
 END
 
 throws_ok {
-    Perl::Rewrite->new(
+    CodeGen::Protection::Perl->new(
         existing_code => $existing_code,
         injected_code => $injected_code,
     )
@@ -93,7 +93,7 @@ qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match text/,
 
 my $rewrite;
 lives_ok {
-    $rewrite = Perl::Rewrite->new(
+    $rewrite = CodeGen::Protection::Perl->new(
         existing_code => $existing_code,
         injected_code => $injected_code,
         overwrite     => 1,
@@ -104,11 +104,11 @@ lives_ok {
 my $expected = <<'END';
 my $bar = 1;
 
-#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: df10700d59c3058bb3cf2d1c06169063
+#<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: df10700d59c3058bb3cf2d1c06169063
 
 my $injected_code = foo();
 
-#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: df10700d59c3058bb3cf2d1c06169063
+#>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: df10700d59c3058bb3cf2d1c06169063
 
 my $foo = 1;
 END
