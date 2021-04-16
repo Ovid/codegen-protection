@@ -1,30 +1,30 @@
-package CodeGen::Protection::Perl;
+package CodeGen::Protection::Type::Perl;
 
 # ABSTRACT: Safely rewrite parts of Perl documents
 
 use v5.10.0;    # for named captures in regexes
 use Moo;
 use Carp 'croak';
-use Types::Standard qw(Str Bool);
+use CodeGen::Protection::Types qw(NonEmptyStr Bool);
 use Digest::MD5 'md5_hex';
 
 our $VERSION = '0.01';
 
 has existing_code => (
     is        => 'ro',
-    isa       => Str,
+    isa       => NonEmptyStr,
     predicate => 1,
 );
 
 has injected_code => (
     is       => 'ro',
-    isa      => Str,
+    isa      => NonEmptyStr,
     required => 1,
 );
 
 has name => (
     is      => 'ro',
-    isa     => Str,
+    isa     => NonEmptyStr,
     default => 'document',
 );
 
@@ -36,12 +36,12 @@ has overwrite => (
 
 has rewritten => (
     is  => 'rwp',
-    isa => Str,
+    isa => NonEmptyStr,
 );
 
 has perltidy => (
     is  => 'ro',
-    isa => Str,
+    isa => NonEmptyStr,
 );
 
 sub BUILD {
@@ -51,7 +51,7 @@ sub BUILD {
     }
     else {
         my $injected_code = $self->injected_code;
-        my $regex    = $self->_regex_to_match_rewritten_document;
+        my $regex         = $self->_regex_to_match_rewritten_document;
         if ( !$self->has_existing_code && $injected_code =~ $regex ) {
             croak(
                 "We re in 'Creation' mode, but the code passed in already has start/end markers"
@@ -194,8 +194,8 @@ END
 }
 
 sub _tidy {
-	my ($self,$code) = @_;
-	return $code unless my $perltidy = $self->perltidy;
+    my ( $self, $code ) = @_;
+    return $code unless my $perltidy = $self->perltidy;
     require Perl::Tidy;
     my @perltidy;
     if ( '1' ne $perltidy ) {
@@ -230,11 +230,11 @@ sub _tidy {
 # end marker.
 
 sub _start_marker_format {
-    '#<<< CodeGen::Protection::Perl %s. Do not touch any code between this and the end comment. Checksum: %s';
+    '#<<< CodeGen::Protection::Type::Perl %s. Do not touch any code between this and the end comment. Checksum: %s';
 }
 
 sub _end_marker_format {
-    '#>>> CodeGen::Protection::Perl %s. Do not touch any code between this and the start comment. Checksum: %s';
+    '#>>> CodeGen::Protection::Type::Perl %s. Do not touch any code between this and the start comment. Checksum: %s';
 }
 
 sub _version_re {
@@ -262,12 +262,12 @@ __END__
 
 =head1 SYNOPSIS
 
-    my $rewrite = CodeGen::Protection::Perl->new(
+    my $rewrite = CodeGen::Protection::Type::Perl->new(
         injected_code => $text,
     );
     say $rewrite->rewritten;
 
-    my $rewrite = CodeGen::Protection::Perl->new(
+    my $rewrite = CodeGen::Protection::Type::Perl->new(
         existing_code => $existing_code,
         injected_code => $injected_code,
     );
@@ -285,11 +285,11 @@ configurable.
 In short, we wrap your "protected" (C<injected_code>) Perl code in start and
 end comments, with checksums for the code:
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
     
     # protected code goes here
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 If C<existing_code> is provided, this module removes the code between the old
 code's start and end markers and replaces it with the C<injected_code>. If
@@ -298,7 +298,7 @@ match the checksums and rewriting the code will fail.
 
 =head1 CONSTRUCTOR
 
-    my $rewrite = CodeGen::Protection::Perl->new(
+    my $rewrite = CodeGen::Protection::Type::Perl->new(
         injected_code => $injected_code,    # required
         existing_code => $existing_code,    # optional
         perltidy      => 1,                 # optional
@@ -354,7 +354,7 @@ There are two modes: "Creation" and "Rewrite."
 
 =head2 Creation Mode
 
-    my $rewrite = CodeGen::Protection::Perl->new(
+    my $rewrite = CodeGen::Protection::Type::Perl->new(
         injected_code => $text,
     );
     say $rewrite->rewritten;
@@ -370,12 +370,12 @@ it:
         return $total;
     }
     END
-    my $rewrite = CodeGen::Protection::Perl->new( injected_code => $perl );
+    my $rewrite = CodeGen::Protection::Type::Perl->new( injected_code => $perl );
     say $rewrite->rewritten;
 
 Output:
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
     sub sum {
         my $total = 0;
@@ -383,7 +383,7 @@ Output:
         return $total;
     }
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 You can then take the marked up document and insert it into another Perl
 document and use the rewrite mode to safely rewrite the code between the start
@@ -404,7 +404,7 @@ marked up document and insert it into another Perl document and use the
 rewrite mode to safely rewrite the code between the start and end markers.
 The rest of the document will be ignored.
 
-    my $rewrite = CodeGen::Protection::Perl->new(
+    my $rewrite = CodeGen::Protection::Type::Perl->new(
         existing_code => $existing_code,
         injected_code => $injected_code,
     );
@@ -430,7 +430,7 @@ like this:
         return sum(@_)/@_;
     }
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
     sub sum {
         my $total = 0;
@@ -438,7 +438,7 @@ like this:
         return $total;
     }
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
     
     1;
 
@@ -460,7 +460,7 @@ into the C<$existing_code> variable and then:
         return $total;
     }
     END
-    my $rewrite = CodeGen::Protection::Perl->new( existing_code => $existing_code, injected_code => $perl );
+    my $rewrite = CodeGen::Protection::Type::Perl->new( existing_code => $existing_code, injected_code => $perl );
     say $rewrite->rewritten;
 
 And that will print out:
@@ -474,7 +474,7 @@ And that will print out:
         return sum(@_)/@_;
     }
     
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
+    #<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
     
     use Scalar::Util 'looks_like_number';
     
@@ -489,7 +489,7 @@ And that will print out:
         return $total;
     }
     
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
+    #>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
     
     1;
 
