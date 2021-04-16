@@ -1,0 +1,4 @@
+{{$NEXT}}
+
+          -  A simple module to allow you to safely rewrite Perl docs on the
+             fly

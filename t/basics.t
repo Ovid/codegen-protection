@@ -1,0 +1,106 @@
+#!/usr/bin/env perl
+
+use lib 'lib';
+use Test::Most;
+use Perl::Rewrite;
+
+sub is_multiline_text ($$$) {
+    my ( $text, $expected, $message ) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my @text     = split /\n/ => $text;
+    my @expected = split /\n/ => $expected;
+    eq_or_diff \@text, \@expected, $message;
+}
+
+my $sample = <<'END';
+sub sum {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
+END
+
+ok my $rewrite
+  = Perl::Rewrite->new( new_text => $sample, identifier => 'test' ),
+  'We should be able to create a rewrite object without old text';
+
+my $expected = <<'END';
+#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+
+sub sum {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
+
+#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+END
+
+
+my $rewritten = $rewrite->rewritten;
+is_multiline_text $rewritten, $expected,
+  '... and we should get our rewritten Perl back with start and end markers';
+
+# saving this for use later
+my $full_document_with_before_and_after_text
+  = "this is before\n$expected\nthis is after";
+
+$rewritten = "before\n\n$rewritten\nafter";
+
+my $new_text = <<'END';
+    class Foo {
+        has $x;
+    }
+END
+
+ok $rewrite = Perl::Rewrite->new(
+    old_text   => $rewritten,
+    new_text   => $new_text,
+    identifier => 'test',
+  ),
+  'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
+
+$expected = <<'END';
+before
+
+#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
+
+    class Foo {
+        has $x;
+    }
+
+#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
+
+after
+END
+$rewritten = $rewrite->rewritten;
+is_multiline_text $rewritten, $expected, '... and get our new text as expected';
+
+ok $rewrite = Perl::Rewrite->new(
+    old_text   => $rewritten,
+    new_text   => $full_document_with_before_and_after_text,
+    identifier => 'test',
+  ),
+  'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
+$rewritten = $rewrite->rewritten;
+
+$expected = <<'END';
+before
+
+#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+
+sub sum {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
+
+#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+
+after
+END
+
+is_multiline_text $rewritten, $expected,
+  '... and see only the part between checksums is replaced';
+
+done_testing;
