@@ -10,13 +10,13 @@ use Digest::MD5 'md5_hex';
 
 our $VERSION = '0.01';
 
-has old_code => (
+has existing_code => (
     is        => 'ro',
     isa       => Str,
     predicate => 1,
 );
 
-has new_code => (
+has injected_code => (
     is       => 'ro',
     isa      => Str,
     required => 1,
@@ -39,16 +39,27 @@ has rewritten => (
     isa => Str,
 );
 
+has perltidy => (
+    is  => 'ro',
+    isa => Str,
+);
+
 sub BUILD {
     my $self = shift;
-    if ( $self->has_old_code ) {
+    if ( $self->has_existing_code ) {
         $self->_rewrite;
     }
     else {
-        my $new_code = $self->new_code;
-        $new_code
-          = $self->_remove_all_leading_and_trailing_blank_lines($new_code);
-        $self->_set_rewritten( $self->_add_checksums($new_code) );
+        my $injected_code = $self->injected_code;
+        my $regex    = $self->_regex_to_match_rewritten_document;
+        if ( !$self->has_existing_code && $injected_code =~ $regex ) {
+            croak(
+                "We re in 'Creation' mode, but the code passed in already has start/end markers"
+            );
+        }
+        $injected_code
+          = $self->_remove_all_leading_and_trailing_blank_lines($injected_code);
+        $self->_set_rewritten( $self->_add_checksums($injected_code) );
     }
 }
 
@@ -57,7 +68,7 @@ sub _rewrite {
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
 
-    my $replacement = $self->new_code;
+    my $replacement = $self->injected_code;
     if ( $replacement =~ $extract_re ) {
 
         # we have a full document with start and end rewrite tags, so let's
@@ -73,7 +84,7 @@ sub _rewrite {
 
 sub _extract_before_and_after {
     my ( $self, $text ) = @_;
-    $text //= $self->old_code;
+    $text //= $self->existing_code;
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
     my $name       = $self->name;
@@ -103,7 +114,7 @@ sub _extract_before_and_after {
 
 sub _extract_body {
     my ( $self, $text ) = @_;
-    $text //= $self->new_code;
+    $text //= $self->injected_code;
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
     my $name       = $self->name;
@@ -165,12 +176,13 @@ sub _get_checksum {
 }
 
 sub _add_checksums {
-    my ( $class, $text ) = @_;
-    $text = $class->_remove_all_leading_and_trailing_blank_lines($text);
-    my $checksum = $class->_get_checksum($text);
-    my $start    = sprintf $class->_start_marker_format => $class->VERSION,
+    my ( $self, $text ) = @_;
+    $text = $self->_remove_all_leading_and_trailing_blank_lines(
+        $self->_tidy($text) );
+    my $checksum = $self->_get_checksum($text);
+    my $start    = sprintf $self->_start_marker_format => $self->VERSION,
       $checksum;
-    my $end = sprintf $class->_end_marker_format => $class->VERSION, $checksum;
+    my $end = sprintf $self->_end_marker_format => $self->VERSION, $checksum;
 
     return <<"END";
 $start
@@ -179,6 +191,33 @@ $text
 
 $end
 END
+}
+
+sub _tidy {
+	my ($self,$code) = @_;
+	return $code unless my $perltidy = $self->perltidy;
+    require Perl::Tidy;
+    my @perltidy;
+    if ( '1' ne $perltidy ) {
+        unless ( -e $perltidy ) {
+            croak("Cannot find perltidyrc file: $perltidy");
+        }
+        @perltidy = ( perltidyrc => $perltidy );
+    }
+
+    my ( $stderr, $tidied );
+
+    # need to clear @ARGV or else Perl::Tidy thinks you're trying
+    # to provide a filename and dies
+    local @ARGV;
+    Perl::Tidy::perltidy(
+        source      => \$code,
+        destination => \$tidied,
+        stderr      => \$stderr,
+        @perltidy,
+    ) and die "Perl::Tidy error: $stderr";
+
+    return $tidied;
 }
 
 # For both the _start_marker_format() and the _end_marker_format(), the first
@@ -224,13 +263,13 @@ __END__
 =head1 SYNOPSIS
 
     my $rewrite = Perl::Rewrite->new(
-        new_code => $text,
+        injected_code => $text,
     );
     say $rewrite->rewritten;
 
     my $rewrite = Perl::Rewrite->new(
-        old_code => $old_code,
-        new_code => $new_code,
+        existing_code => $existing_code,
+        injected_code => $injected_code,
     );
     say $rewrite->rewritten;
 
@@ -243,6 +282,72 @@ concept.
 Note that this code is designed for Perl documents and is not very
 configurable.
 
+In short, we wrap your "protected" (C<injected_code>) Perl code in start and
+end comments, with checksums for the code:
+
+    #<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    
+    # protected code goes here
+
+    #>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+
+If C<existing_code> is provided, this module removes the code between the old
+code's start and end markers and replaces it with the C<injected_code>. If
+the code between the start and end markers has been altered, it will no longer
+match the checksums and rewriting the code will fail.
+
+=head1 CONSTRUCTOR
+
+    my $rewrite = Perl::Rewrite->new(
+        injected_code => $injected_code,    # required
+        existing_code => $existing_code,    # optional
+        perltidy      => 1,                 # optional
+        name          => $name,             # optional
+        overwrite     => 0,                 # optional
+    );
+
+The constructor only requires that C<injected_code> be passed in.
+
+=over 4
+
+=item * C<injected_code>
+
+This is a required string containing any new Perl code to be built with this
+tool. If C<injected_code> is passed in an C<existing_code> is not, we're in "Creation
+mode" (see L<#Modes>) and the new Perl code must I<not> have start and end
+markers generated by this tool.
+
+=item * C<existing_code>
+
+This is an optional string containing Perl code  already built with this tool.
+If provided, this code I<must> have the start and end markers generated by
+this tool so that the rewriter knows the section of code to replace with the
+injected code.
+
+=item * C<name>
+
+Optional name for the code. This is only used in error messages if you're
+generating a lot of code and an error occurs and you'd like to see the name
+in the error.
+
+=item * C<perltidy>
+
+If true, will attempt to run L<Perl::Tidy> on the code between the start and
+end markers. If the value of perltidy is the number 1 (one), then a generic
+pass of L<Perl::Tidy> will be done on the code. If the value is true and
+anything I<other> than one, this is assumed to be the path to a F<.perltidyrc>
+file and that will be used to tidy the code (or C<croak()> if the
+F<.perltidyrc> file cannot be found).
+
+=item * C<overwrite>
+
+Optional boolean, default false. In "Rewrite mode", if the checksum in the
+start and end markers doesn't match the code within them, someone has manually
+altered that code and we do not automatically overwrite it (in fact, we
+C<croak()>). Setting C<overwrite> to true will cause it to be overwritten.
+
+=back
+
 =head1 MODES
 
 There are two modes: "Creation" and "Rewrite."
@@ -250,11 +355,11 @@ There are two modes: "Creation" and "Rewrite."
 =head2 Creation Mode
 
     my $rewrite = Perl::Rewrite->new(
-        new_code => $text,
+        injected_code => $text,
     );
     say $rewrite->rewritten;
 
-If you create an instance with C<new_code> but not old text, this will wrap
+If you create an instance with C<injected_code> but not old text, this will wrap
 the new text in start and end tags that "protect" the document if you rewrite
 it:
 
@@ -265,7 +370,7 @@ it:
         return $total;
     }
     END
-    my $rewrite = Perl::Rewrite->new( new_code => $perl );
+    my $rewrite = Perl::Rewrite->new( injected_code => $perl );
     say $rewrite->rewritten;
 
 Output:
@@ -300,18 +405,18 @@ rewrite mode to safely rewrite the code between the start and end markers.
 The rest of the document will be ignored.
 
     my $rewrite = Perl::Rewrite->new(
-        old_code => $old_code,
-        new_code => $new_code,
+        existing_code => $existing_code,
+        injected_code => $injected_code,
     );
     say $rewrite->rewritten;
 
-In the above, assuming that C<$old_code> is a rewritable document, the
-C<$new_code> will replace the rewritable section of the C<$old_code>, leaving
+In the above, assuming that C<$existing_code> is a rewritable document, the
+C<$injected_code> will replace the rewritable section of the C<$existing_code>, leaving
 the rest unchanged.
 
-However, if C<$new_code> is I<also> a rewritable document, then the rewritable
-portion of the C<$new_code> will be extract and used to replace the rewritable
-portion of the C<$old_code>.
+However, if C<$injected_code> is I<also> a rewritable document, then the rewritable
+portion of the C<$injected_code> will be extract and used to replace the rewritable
+portion of the C<$existing_code>.
 
 So for the code shown in the "Creation mode" section, you could add more code
 like this:
@@ -339,7 +444,7 @@ like this:
 
 However, later on I might realize that the C<sum> function will happily try to
 sum things which are not numbers, so I want to fix that. I'll slurp the C<My::Package> code
-into the C<$old_code> variable and then:
+into the C<$existing_code> variable and then:
 
     my $perl = <<'END';
     use Scalar::Util 'looks_like_number';
@@ -355,7 +460,7 @@ into the C<$old_code> variable and then:
         return $total;
     }
     END
-    my $rewrite = Perl::Rewrite->new( old_code => $old_code, new_code => $perl );
+    my $rewrite = Perl::Rewrite->new( existing_code => $existing_code, injected_code => $perl );
     say $rewrite->rewritten;
 
 And that will print out:

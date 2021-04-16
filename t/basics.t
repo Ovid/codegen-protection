@@ -21,7 +21,7 @@ sub sum {
 END
 
 ok my $rewrite
-  = Perl::Rewrite->new( new_code => $sample, identifier => 'test' ),
+  = Perl::Rewrite->new( injected_code => $sample, identifier => 'test' ),
   'We should be able to create a rewrite object without old text';
 
 my $expected = <<'END';
@@ -36,7 +36,6 @@ sub sum {
 #>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 END
 
-
 my $rewritten = $rewrite->rewritten;
 is_multiline_text $rewritten, $expected,
   '... and we should get our rewritten Perl back with start and end markers';
@@ -47,16 +46,16 @@ my $full_document_with_before_and_after_text
 
 $rewritten = "before\n\n$rewritten\nafter";
 
-my $new_code = <<'END';
+my $injected_code = <<'END';
     class Foo {
         has $x;
     }
 END
 
 ok $rewrite = Perl::Rewrite->new(
-    old_code   => $rewritten,
-    new_code   => $new_code,
-    identifier => 'test',
+    existing_code => $rewritten,
+    injected_code => $injected_code,
+    identifier    => 'test',
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
 
@@ -76,11 +75,11 @@ END
 $rewritten = $rewrite->rewritten;
 is_multiline_text $rewritten, $expected, '... and get our new text as expected';
 
-my ($old, $new) = ($rewritten,$full_document_with_before_and_after_text);
+my ( $old, $new ) = ( $rewritten, $full_document_with_before_and_after_text );
 ok $rewrite = Perl::Rewrite->new(
-    old_code   => $rewritten,
-    new_code   => $full_document_with_before_and_after_text,
-    identifier => 'test',
+    existing_code => $rewritten,
+    injected_code => $full_document_with_before_and_after_text,
+    identifier    => 'test',
   ),
   'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
 $rewritten = $rewrite->rewritten;
@@ -107,13 +106,46 @@ is_multiline_text $rewritten, $expected,
 $old =~ s/Perl::Rewrite 0.01/Perl::Rewrite 1.02/g;
 
 ok $rewrite = Perl::Rewrite->new(
-    old_code   => $old,
-    new_code   => $new,
+    existing_code => $old,
+    injected_code => $new,
   ),
   'The version number of Perl::Rewrite should not matter when rewriting code;';
 $rewritten = $rewrite->rewritten;
 
 is_multiline_text $rewritten, $expected,
   '... and see only the part between checksums is replaced';
+
+$new = <<'END';
+    sub foo {
+          my ($bar   ) = @_  ;
+          return $bar +  
+          1;
+        }
+END
+ok $rewrite = Perl::Rewrite->new(
+    existing_code => $old,
+    injected_code => $new,
+    perltidy      => 1,
+  ),
+  'The version number of Perl::Rewrite should not matter when rewriting code;';
+$rewritten = $rewrite->rewritten;
+
+$expected = <<'END';
+before
+
+#<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: 85aac48abc051a44c83bf11122764e1f
+
+    sub foo {
+        my ($bar) = @_;
+        return $bar + 1;
+    }
+
+#>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: 85aac48abc051a44c83bf11122764e1f
+
+after
+END
+
+is_multiline_text $rewritten, $expected,
+  'We should be able to tidy our code before it gets wrapped in start/end markers';
 
 done_testing;
