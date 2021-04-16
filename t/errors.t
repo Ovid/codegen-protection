@@ -12,7 +12,7 @@ sub is_multiline_text ($$$) {
     eq_or_diff \@text, \@expected, $message;
 }
 
-my $old_text = <<'END';
+my $old_code = <<'END';
 #<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
@@ -24,7 +24,7 @@ sub sum {
 #>>> Perl::Rewrite 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 END
 
-my $new_text = <<'END';
+my $new_code = <<'END';
 sub sum {
     my $total = 0;
     $total += $_ foreach @_;
@@ -34,14 +34,14 @@ END
 
 throws_ok {
     Perl::Rewrite->new(
-        old_text   => $old_text,
-        new_text   => $new_text,
+        old_code   => $old_code,
+        new_code   => $new_code,
     )
 }
 qr/\QStart digest (aa97a021bd70bf3b9fa3e52f203f2660) does not match end digest (fa97a021bd70bf3b9fa3e52f203f2660)/,
   'If our start and end digests are not identical we should get an appropriate error';
 
-$old_text = <<'END';
+$old_code = <<'END';
 sub sum {
     my $total = 0;
     $total += $_ foreach @_;
@@ -49,20 +49,20 @@ sub sum {
 }
 END
 
-$new_text = <<'END';
+$new_code = <<'END';
 sub sum { my $total = 0; $total += $_ foreach @_; return $total; }
 END
 
 throws_ok {
     Perl::Rewrite->new(
-        old_text   => $old_text,
-        new_text   => $new_text,
+        old_code   => $old_code,
+        new_code   => $new_code,
     )
 }
 qr/Could not find start and end markers in text/,
   '... or for trying to rewrite Perl without start/end markers in the text';
 
-$old_text = <<'END';
+$old_code = <<'END';
 my $bar = 1;
 
 #<<< Perl::Rewrite 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
@@ -78,14 +78,14 @@ sub sum {
 my $foo = 1;
 END
 
-$new_text = <<'END';
+$new_code = <<'END';
 my $new_code = foo();
 END
 
 throws_ok {
     Perl::Rewrite->new(
-        old_text   => $old_text,
-        new_text   => $new_text,
+        old_code   => $old_code,
+        new_code   => $new_code,
     )
 }
 qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match text/,
@@ -94,8 +94,8 @@ qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match text/,
 my $rewrite;  
 lives_ok {
     $rewrite = Perl::Rewrite->new(
-        old_text   => $old_text,
-        new_text   => $new_text,
+        old_code   => $old_code,
+        new_code   => $new_code,
         overwrite => 1,
     )
 }

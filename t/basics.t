@@ -21,7 +21,7 @@ sub sum {
 END
 
 ok my $rewrite
-  = Perl::Rewrite->new( new_text => $sample, identifier => 'test' ),
+  = Perl::Rewrite->new( new_code => $sample, identifier => 'test' ),
   'We should be able to create a rewrite object without old text';
 
 my $expected = <<'END';
@@ -47,15 +47,15 @@ my $full_document_with_before_and_after_text
 
 $rewritten = "before\n\n$rewritten\nafter";
 
-my $new_text = <<'END';
+my $new_code = <<'END';
     class Foo {
         has $x;
     }
 END
 
 ok $rewrite = Perl::Rewrite->new(
-    old_text   => $rewritten,
-    new_text   => $new_text,
+    old_code   => $rewritten,
+    new_code   => $new_code,
     identifier => 'test',
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
@@ -76,9 +76,10 @@ END
 $rewritten = $rewrite->rewritten;
 is_multiline_text $rewritten, $expected, '... and get our new text as expected';
 
+my ($old, $new) = ($rewritten,$full_document_with_before_and_after_text);
 ok $rewrite = Perl::Rewrite->new(
-    old_text   => $rewritten,
-    new_text   => $full_document_with_before_and_after_text,
+    old_code   => $rewritten,
+    new_code   => $full_document_with_before_and_after_text,
     identifier => 'test',
   ),
   'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
@@ -99,6 +100,18 @@ sub sum {
 
 after
 END
+
+is_multiline_text $rewritten, $expected,
+  '... and see only the part between checksums is replaced';
+
+$old =~ s/Perl::Rewrite 0.01/Perl::Rewrite 1.02/g;
+
+ok $rewrite = Perl::Rewrite->new(
+    old_code   => $old,
+    new_code   => $new,
+  ),
+  'The version number of Perl::Rewrite should not matter when rewriting code;';
+$rewritten = $rewrite->rewritten;
 
 is_multiline_text $rewritten, $expected,
   '... and see only the part between checksums is replaced';
