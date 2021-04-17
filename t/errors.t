@@ -59,7 +59,7 @@ throws_ok {
         injected_code => $injected_code,
     )
 }
-qr/Could not find start and end markers in text/,
+qr/Could not find the Perl start and end markers in text/,
   '... or for trying to rewrite Perl without start/end markers in the text';
 
 $existing_code = <<'END';
