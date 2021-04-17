@@ -2,7 +2,7 @@
 
 use lib 'lib';
 use Test::Most;
-use CodeGen::Protection::Type::Perl;
+use CodeGen::Protection::Format::Perl;
 
 sub is_multiline_text ($$$) {
     my ( $text, $expected, $message ) = @_;
@@ -20,14 +20,14 @@ sub sum {
 }
 END
 
-ok my $rewrite = CodeGen::Protection::Type::Perl->new(
+ok my $rewrite = CodeGen::Protection::Format::Perl->new(
     injected_code => $sample,
     identifier    => 'test'
   ),
   'We should be able to create a rewrite object without old text';
 
 my $expected = <<'END';
-#<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
     my $total = 0;
@@ -35,7 +35,7 @@ sub sum {
     return $total;
 }
 
-#>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 END
 
 my $rewritten = $rewrite->rewritten;
@@ -54,7 +54,7 @@ my $injected_code = <<'END';
     }
 END
 
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewrite = CodeGen::Protection::Format::Perl->new(
     existing_code => $rewritten,
     injected_code => $injected_code,
     identifier    => 'test',
@@ -64,13 +64,13 @@ ok $rewrite = CodeGen::Protection::Type::Perl->new(
 $expected = <<'END';
 before
 
-#<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
+#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
 
     class Foo {
         has $x;
     }
 
-#>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
+#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
 
 after
 END
@@ -78,7 +78,7 @@ $rewritten = $rewrite->rewritten;
 is_multiline_text $rewritten, $expected, '... and get our new text as expected';
 
 my ( $old, $new ) = ( $rewritten, $full_document_with_before_and_after_text );
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewrite = CodeGen::Protection::Format::Perl->new(
     existing_code => $rewritten,
     injected_code => $full_document_with_before_and_after_text,
     identifier    => 'test',
@@ -89,7 +89,7 @@ $rewritten = $rewrite->rewritten;
 $expected = <<'END';
 before
 
-#<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
     my $total = 0;
@@ -97,7 +97,7 @@ sub sum {
     return $total;
 }
 
-#>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 after
 END
@@ -106,13 +106,13 @@ is_multiline_text $rewritten, $expected,
   '... and see only the part between checksums is replaced';
 
 $old
-  =~ s/CodeGen::Protection::Type::Perl 0.01/CodeGen::Protection::Type::Perl 1.02/g;
+  =~ s/CodeGen::Protection::Format::Perl 0.01/CodeGen::Protection::Format::Perl 1.02/g;
 
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewrite = CodeGen::Protection::Format::Perl->new(
     existing_code => $old,
     injected_code => $new,
   ),
-  'The version number of CodeGen::Protection::Type::Perl should not matter when rewriting code;';
+  'The version number of CodeGen::Protection::Format::Perl should not matter when rewriting code;';
 $rewritten = $rewrite->rewritten;
 
 is_multiline_text $rewritten, $expected,
@@ -125,25 +125,25 @@ $new = <<'END';
           1;
         }
 END
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewrite = CodeGen::Protection::Format::Perl->new(
     existing_code => $old,
     injected_code => $new,
     tidy          => 1,
   ),
-  'The version number of CodeGen::Protection::Type::Perl should not matter when rewriting code;';
+  'The version number of CodeGen::Protection::Format::Perl should not matter when rewriting code;';
 $rewritten = $rewrite->rewritten;
 
 $expected = <<'END';
 before
 
-#<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: 85aac48abc051a44c83bf11122764e1f
+#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: 85aac48abc051a44c83bf11122764e1f
 
     sub foo {
         my ($bar) = @_;
         return $bar + 1;
     }
 
-#>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: 85aac48abc051a44c83bf11122764e1f
+#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: 85aac48abc051a44c83bf11122764e1f
 
 after
 END
