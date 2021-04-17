@@ -2,7 +2,7 @@
 
 use lib 'lib';
 use Test::Most;
-use CodeGen::Protection::Type::Perl;
+use CodeGen::Protection ':all';
 
 sub is_multiline_text ($$$) {
     my ( $text, $expected, $message ) = @_;
@@ -20,11 +20,12 @@ sub sum {
 }
 END
 
-ok my $rewrite = CodeGen::Protection::Type::Perl->new(
+ok my $rewritten = create_injected_code(
+    type          => 'Perl',
     injected_code => $sample,
-    identifier    => 'test'
+    tidy          => 1,
   ),
-  'We should be able to create a rewrite object without old text';
+  'We should be able to create some code to inject';
 
 my $expected = <<'END';
 #<<< CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
@@ -38,7 +39,6 @@ sub sum {
 #>>> CodeGen::Protection::Type::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 END
 
-my $rewritten = $rewrite->rewritten;
 is_multiline_text $rewritten, $expected,
   '... and we should get our rewritten Perl back with start and end markers';
 
@@ -54,10 +54,10 @@ my $injected_code = <<'END';
     }
 END
 
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewritten = rewrite_code(
+    type          => 'Perl',
     existing_code => $rewritten,
     injected_code => $injected_code,
-    identifier    => 'test',
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
 
@@ -74,17 +74,15 @@ before
 
 after
 END
-$rewritten = $rewrite->rewritten;
 is_multiline_text $rewritten, $expected, '... and get our new text as expected';
 
 my ( $old, $new ) = ( $rewritten, $full_document_with_before_and_after_text );
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewritten = rewrite_code(
+    type          => 'Perl',
     existing_code => $rewritten,
     injected_code => $full_document_with_before_and_after_text,
-    identifier    => 'test',
   ),
   'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
-$rewritten = $rewrite->rewritten;
 
 $expected = <<'END';
 before
@@ -108,12 +106,12 @@ is_multiline_text $rewritten, $expected,
 $old
   =~ s/CodeGen::Protection::Type::Perl 0.01/CodeGen::Protection::Type::Perl 1.02/g;
 
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewritten = rewrite_code(
+    type          => 'Perl',
     existing_code => $old,
     injected_code => $new,
   ),
   'The version number of CodeGen::Protection::Type::Perl should not matter when rewriting code;';
-$rewritten = $rewrite->rewritten;
 
 is_multiline_text $rewritten, $expected,
   '... and see only the part between checksums is replaced';
@@ -125,13 +123,13 @@ $new = <<'END';
           1;
         }
 END
-ok $rewrite = CodeGen::Protection::Type::Perl->new(
+ok $rewritten = rewrite_code(
+    type          => 'Perl',
     existing_code => $old,
     injected_code => $new,
     tidy          => 1,
   ),
   'The version number of CodeGen::Protection::Type::Perl should not matter when rewriting code;';
-$rewritten = $rewrite->rewritten;
 
 $expected = <<'END';
 before

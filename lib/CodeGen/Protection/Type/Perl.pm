@@ -39,7 +39,7 @@ has rewritten => (
     isa => NonEmptyStr,
 );
 
-has perltidy => (
+has tidy => (
     is  => 'ro',
     isa => NonEmptyStr,
 );
@@ -195,7 +195,7 @@ END
 
 sub _tidy {
     my ( $self, $code ) = @_;
-    return $code unless my $perltidy = $self->perltidy;
+    return $code unless my $perltidy = $self->tidy;
     require Perl::Tidy;
     my @perltidy;
     if ( '1' ne $perltidy ) {
