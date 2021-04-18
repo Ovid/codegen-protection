@@ -4,7 +4,7 @@ CodeGen::Protection - Safely rewrite parts of generated code
 
 # VERSION
 
-version 0.02
+version 0.03
 
 # SYNOPSIS
 
@@ -31,10 +31,10 @@ Code that writes code can be a powerful tool, especially when you need to
 generate lots of boilerplate. However, when a developer takes the generated
 code, they can easily rewrite that code in a way that no longer works, or make
 good changes that get wiped out if the code is regenerated.
-[https://metacpan.org/pod/DBIx::Class::Schema::Loader](https://metacpan.org/pod/DBIx::Class::Schema::Loader) protects against this
-by marking blocks of code with start and end comments and an MD5 checksum. If
-you change any of the code between those comments, regenerating your schema
-will fail.
+[DBIx::Class::Schema::Loader](https://metacpan.org/pod/DBIx::Class::Schema::Loader)
+protects against this by marking blocks of code with start and end comments
+and an MD5 checksum. If you change any of the code between those comments,
+regenerating your schema will fail.
 
 This module takes this idea and generalizes it. It allows you to do a safe
 partial rewrite of documents. At the present time, we support Perl and HTML.
@@ -155,14 +155,12 @@ There are two modes: "Creation" and "Rewrite."
 
 ## Creation Mode
 
-    my $rewrite = CodeGen::Protection::Perl->new(
+    my $protected_code = create_protected_code(
         protected_code => $text,
     );
-    say $rewrite->rewritten;
 
-If you create an instance with `protected_code` but not old text, this will wrap
-the new text in start and end tags that "protect" the document if you rewrite
-it:
+This will wrap the new text in start and end tags that "protect" the document
+if you rewrite it:
 
     my $perl = <<'END';
     sub sum {
@@ -171,12 +169,11 @@ it:
         return $total;
     }
     END
-    my $rewrite = CodeGen::Protection::Perl->new( protected_code => $perl );
-    say $rewrite->rewritten;
+    my $protected_code = protected_code( protected_code => $perl );
 
-Output:
+Result:
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
     sub sum {
         my $total = 0;
@@ -184,7 +181,7 @@ Output:
         return $total;
     }
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 You can then take the marked up document and insert it into another Perl
 document and use the rewrite mode to safely rewrite the code between the start
@@ -205,11 +202,10 @@ marked up document and insert it into another Perl document and use the
 rewrite mode to safely rewrite the code between the start and end markers.
 The rest of the document will be ignored.
 
-    my $rewrite = CodeGen::Protection::Perl->new(
-        existing_code => $existing_code,
+    my $rewrite = rewrite_code(
+        existing_code  => $existing_code,
         protected_code => $protected_code,
     );
-    say $rewrite->rewritten;
 
 In the above, assuming that `$existing_code` is a rewritable document, the
 `$protected_code` will replace the rewritable section of the `$existing_code`, leaving
@@ -231,7 +227,7 @@ like this:
         return sum(@_)/@_;
     }
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
     sub sum {
         my $total = 0;
@@ -239,13 +235,13 @@ like this:
         return $total;
     }
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
     
     1;
 
 However, later on I might realize that the `sum` function will happily try to
-sum things which are not numbers, so I want to fix that. I'll slurp the `My::Package` code
-into the `$existing_code` variable and then:
+sum things which are not numbers, so I want to fix that. I'll slurp the
+`My::Package` code into the `$existing_code` variable and then:
 
     my $perl = <<'END';
     use Scalar::Util 'looks_like_number';
@@ -261,10 +257,9 @@ into the `$existing_code` variable and then:
         return $total;
     }
     END
-    my $rewrite = CodeGen::Protection::Perl->new( existing_code => $existing_code, protected_code => $perl );
-    say $rewrite->rewritten;
+    my $rewrite = rewrite_code( existing_code => $existing_code, protected_code => $perl );
 
-And that will print out:
+And that will result in:
 
     package My::Package;
     
@@ -275,7 +270,7 @@ And that will print out:
         return sum(@_)/@_;
     }
     
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
+    #<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
     
     use Scalar::Util 'looks_like_number';
     
@@ -290,7 +285,7 @@ And that will print out:
         return $total;
     }
     
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
+    #>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
     
     1;
 
@@ -300,6 +295,8 @@ rewritten, while the rest of the code remains unchanged.
 # ACKNOWLEDGEMENTS
 
 We would like to thank [All Around the World](https://allaroundtheworld.fr/)
+
+Thanks to Matt Trout (mst) for the inspiration from the schema loader.
 for sponsoring this work.
 
 # AUTHOR
