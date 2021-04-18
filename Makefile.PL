@@ -21,6 +21,7 @@ my %WriteMakefileArgs = (
     "Digest::MD5" => "2.55",
     "Module::Runtime" => "0.016",
     "Moo" => "2.005003",
+    "Perl::Tidy" => 20190601,
     "Type::Tiny" => "1.012001"
   },
   "TEST_REQUIRES" => {
@@ -29,7 +30,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "Test::Most" => "0.37"
   },
-  "VERSION" => "0.03",
+  "VERSION" => "0.04",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -43,6 +44,7 @@ my %FallbackPrereqs = (
   "File::Spec" => 0,
   "Module::Runtime" => "0.016",
   "Moo" => "2.005003",
+  "Perl::Tidy" => 20190601,
   "Test::More" => 0,
   "Test::Most" => "0.37",
   "Type::Tiny" => "1.012001"
