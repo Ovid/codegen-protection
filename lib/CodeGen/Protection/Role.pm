@@ -23,7 +23,7 @@ has existing_code => (
     predicate => 1,
 );
 
-has injected_code => (
+has protected_code => (
     is       => 'ro',
     isa      => NonEmptyStr,
     required => 1,
@@ -68,18 +68,19 @@ sub BUILD {
         $self->_rewrite;
     }
     else {
-        my $injected_code = $self->injected_code;
-        my $regex         = $self->_regex_to_match_rewritten_document;
-        if ( !$self->has_existing_code && $injected_code =~ $regex ) {
+        my $protected_code = $self->protected_code;
+        my $regex          = $self->_regex_to_match_rewritten_document;
+        if ( !$self->has_existing_code && $protected_code =~ $regex ) {
             my $type = $self->document_type;
             my $name = $self->name;
             croak(
                 "We re in 'Creation' mode, but the $type code passed in already has start/end markers for $name."
             );
         }
-        $injected_code
-          = $self->_remove_all_leading_and_trailing_blank_lines($injected_code);
-        $self->_set_rewritten( $self->_add_checksums($injected_code) );
+        $protected_code
+          = $self->_remove_all_leading_and_trailing_blank_lines(
+            $protected_code);
+        $self->_set_rewritten( $self->_add_checksums($protected_code) );
     }
 }
 
@@ -88,7 +89,7 @@ sub _rewrite {
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
 
-    my $replacement = $self->injected_code;
+    my $replacement = $self->protected_code;
     if ( $replacement =~ $extract_re ) {
 
         # we have a full document with start and end rewrite tags, so let's
@@ -137,7 +138,7 @@ sub _extract_before_and_after {
 
 sub _extract_body {
     my ( $self, $text ) = @_;
-    $text //= $self->injected_code;
+    $text //= $self->protected_code;
 
     my $extract_re = $self->_regex_to_match_rewritten_document;
     my $name       = $self->name;
@@ -177,16 +178,16 @@ sub _extract_body {
 #
 
 sub _regex_to_match_rewritten_document {
-    my $self = shift;
+    my $self  = shift;
     my $class = ref $self || $self;
 
     my $digest_start_re = qr/(?<digest_start>[0-9a-f]{32})/;
     my $digest_end_re   = qr/(?<digest_end>[0-9a-f]{32})/;
-    my $start_marker_re
-      = sprintf $class->_start_marker_format => $class,$class->_version_re,
+    my $start_marker_re = sprintf $class->_start_marker_format => $class,
+      $class->_version_re,
       $digest_start_re;
-    my $end_marker_re
-      = sprintf $class->_end_marker_format => $class, $class->_version_re,
+    my $end_marker_re = sprintf $class->_end_marker_format => $class,
+      $class->_version_re,
       $digest_end_re;
 
     # don't use the /x modifier to make this prettier unless you call
@@ -207,9 +208,11 @@ sub _add_checksums {
     $text = $self->_remove_all_leading_and_trailing_blank_lines(
         $self->_tidy($text) );
     my $checksum = $self->_get_checksum($text);
-    my $start    = sprintf $self->_start_marker_format => $class, $self->_get_version,
+    my $start    = sprintf $self->_start_marker_format => $class,
+      $self->_get_version,
       $checksum;
-    my $end = sprintf $self->_end_marker_format => $class, $self->_get_version, $checksum;
+    my $end = sprintf $self->_end_marker_format => $class, $self->_get_version,
+      $checksum;
 
     return <<"END";
 $start
@@ -256,6 +259,7 @@ sub _get_version {
 }
 
 sub _tidy {
+
     # by default, we do not tidy code unless it's overridden in the child
     my ( $self, $code ) = @_;
     return $code;
@@ -285,7 +289,7 @@ This role allows you to easily define modules that allow you to do a safe
 partial rewrite of documents. If you're familiar with
 L<DBIx::Class::Schema::Loader>, you probably know the basic concept.
 
-In short, we wrap your "protected" (C<injected_code>) code in start and
+In short, we wrap your "protected" (C<protected_code>) code in start and
 end comments, with checksums for the code:
 
     #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
@@ -373,7 +377,7 @@ Creating:
 
     my $javascript = create_protected_code(
         type          => 'Javascript',
-        injected_code => $sample,
+        protected_code => $sample,
     );
 
 Or rewriting:
@@ -381,5 +385,5 @@ Or rewriting:
     my $javascript = create_protected_code(
         type          => 'Javascript',
         existing_code => $javascript,
-        injected_code => $rewritten_code,
+        protected_code => $rewritten_code,
     );

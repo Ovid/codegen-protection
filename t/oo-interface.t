@@ -21,8 +21,8 @@ sub sum {
 END
 
 ok my $rewrite = CodeGen::Protection::Format::Perl->new(
-    injected_code => $sample,
-    identifier    => 'test'
+    protected_code => $sample,
+    identifier     => 'test'
   ),
   'We should be able to create a rewrite object without old text';
 
@@ -48,16 +48,16 @@ my $full_document_with_before_and_after_text
 
 $rewritten = "before\n\n$rewritten\nafter";
 
-my $injected_code = <<'END';
+my $protected_code = <<'END';
     class Foo {
         has $x;
     }
 END
 
 ok $rewrite = CodeGen::Protection::Format::Perl->new(
-    existing_code => $rewritten,
-    injected_code => $injected_code,
-    identifier    => 'test',
+    existing_code  => $rewritten,
+    protected_code => $protected_code,
+    identifier     => 'test',
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
 
@@ -79,9 +79,9 @@ is_multiline_text $rewritten, $expected, '... and get our new text as expected';
 
 my ( $old, $new ) = ( $rewritten, $full_document_with_before_and_after_text );
 ok $rewrite = CodeGen::Protection::Format::Perl->new(
-    existing_code => $rewritten,
-    injected_code => $full_document_with_before_and_after_text,
-    identifier    => 'test',
+    existing_code  => $rewritten,
+    protected_code => $full_document_with_before_and_after_text,
+    identifier     => 'test',
   ),
   'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
 $rewritten = $rewrite->rewritten;
@@ -109,8 +109,8 @@ $old
   =~ s/CodeGen::Protection::Format::Perl 0.01/CodeGen::Protection::Format::Perl 1.02/g;
 
 ok $rewrite = CodeGen::Protection::Format::Perl->new(
-    existing_code => $old,
-    injected_code => $new,
+    existing_code  => $old,
+    protected_code => $new,
   ),
   'The version number of CodeGen::Protection::Format::Perl should not matter when rewriting code;';
 $rewritten = $rewrite->rewritten;
@@ -126,9 +126,9 @@ $new = <<'END';
         }
 END
 ok $rewrite = CodeGen::Protection::Format::Perl->new(
-    existing_code => $old,
-    injected_code => $new,
-    tidy          => 1,
+    existing_code  => $old,
+    protected_code => $new,
+    tidy           => 1,
   ),
   'The version number of CodeGen::Protection::Format::Perl should not matter when rewriting code;';
 $rewritten = $rewrite->rewritten;

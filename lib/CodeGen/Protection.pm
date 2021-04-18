@@ -24,23 +24,23 @@ our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
 sub create_protected_code {
     state $check = compile_named(
-        type          => NonEmptyStr,
-        injected_code => NonEmptyStr,
-        tidy          => Optional [Bool],
-        name          => Optional [NonEmptyStr],
-        overwrite     => Optional [Bool],
+        type           => NonEmptyStr,
+        protected_code => NonEmptyStr,
+        tidy           => Optional [Bool],
+        name           => Optional [NonEmptyStr],
+        overwrite      => Optional [Bool],
     );
     return _rewritten( $check->(@_) );
 }
 
 sub rewrite_code {
     state $check = compile_named(
-        type          => NonEmptyStr,
-        injected_code => NonEmptyStr,
-        existing_code => NonEmptyStr,
-        tidy          => Optional [Bool],
-        name          => Optional [NonEmptyStr],
-        overwrite     => Optional [Bool],
+        type           => NonEmptyStr,
+        protected_code => NonEmptyStr,
+        existing_code  => NonEmptyStr,
+        tidy           => Optional [Bool],
+        name           => Optional [NonEmptyStr],
+        overwrite      => Optional [Bool],
     );
     return _rewritten( $check->(@_) );
 }
@@ -70,29 +70,34 @@ __END__
     # Creating a new document:
 
     my $perl = create_protected_code(
-        type          => 'Perl',
-        injected_code => $sample,
+        type           => 'Perl',
+        protected_code => $sample,
     );
 
     # Or rewriting:
 
     my $rewritten = rewrite_code(
-        type          => 'Perl',
-        existing_code => $perl,
-        injected_code => $rewritten_code,
+        type           => 'Perl',
+        existing_code  => $perl,
+        protected_code => $rewritten_code,
     );
 
 =head1 DESCRIPTION
 
-This module allows you to do a safe partial rewrite of documents. If you're
-familiar with L<DBIx::Class::Schema::Loader>, you probably know the basic
-concept.
+Code that writes code can be a powerful tool, especially when you need to
+generate lots of boilerplate. However, when a developer takes the generated
+code, they can easily rewrite that code in a way that no longer works, or make
+good changes that get wiped out if the code is regenerated.
+L<https://metacpan.org/pod/DBIx::Class::Schema::Loader> protects against this
+by marking blocks of code with start and end comments and an MD5 checksum. If
+you change any of the code between those comments, regenerating your schema
+will fail.
 
-Note that this code is designed for Perl documents and is not very
-configurable.
+This module takes this idea and generalizes it. It allows you to do a safe
+partial rewrite of documents. At the present time, we support Perl and HTML.
 
-In short, we wrap your "protected" (C<injected_code>) Perl code in start and
-end comments, with checksums for the code:
+In short, we wrap your "protected" (C<protected_code>) code in start and end
+comments, with checksums for the code:
 
     #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
     
@@ -100,11 +105,40 @@ end comments, with checksums for the code:
 
     #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
-If C<rewrite_code>, this module removes the code between the
-C<existing_code>'s start and end markers and replaces it with the
-C<injected_code>. If the code between the start and end markers has been
+Or:
+
+    <!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the end comment. Checksum: c286b9b2577e085df857227eae996c40 -->
+    
+        <ol>
+          <li>This is a list</li>
+          <li>This is the second entry.</li>
+        </ol>
+    
+    <!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the start comment. Checksum: c286b9b2577e085df857227eae996c40 -->
+
+If calling the C<rewrite_code> function, this module removes the code between
+the C<existing_code>'s start and end markers and replaces it with the
+C<protected_code>. If the code between the start and end markers has been
 altered, it will no longer match the checksums and rewriting the code will
 fail.
+
+=head1 TYPES
+
+As of this writing, we can protect Perl and HTML:
+
+    my $rewritten = rewrite_code(
+        type           => 'Perl',
+        existing_code  => $perl,
+        protected_code => $protected_code,
+    );
+
+    my $rewritten = rewrite_code(
+        type           => 'HTML',
+        existing_code  => $HTML,
+        protected_code => $protected_code,
+    );
+
+See L<CodeGen::Protection::Role> to learn how to create your own types to protect.
 
 =head1 FUNCTIONS
 
@@ -116,22 +150,21 @@ Functions are exportable on-demand, or both can be exported via C<:all>.
 =head2 C<create_protected_code>
 
     my $protected_code = create_protected_code(
-        type => 'Perl',
-
+        type           => 'Perl',
+        protected_code => $text_of_code,
+    );
 
 =head3 ARGUMENTS
 
 Both C<create_protected_code> and C<rewrite_code> take the same arguments,
-except that C<rewrite_code> does not allow the C<injected_code> argument.
+except that C<rewrite_code> does not allow the C<protected_code> argument.
 
 =over 4
 
-=item * C<injected_code>
+=item * C<protected_code>
 
 This is a required string containing any new Perl code to be built with this
-tool. If C<injected_code> is passed in an C<existing_code> is not, we're in "Creation
-mode" (see L<#Modes>) and the new Perl code must I<not> have start and end
-markers generated by this tool.
+tool.
 
 =item * C<existing_code>
 
@@ -146,14 +179,14 @@ Optional name for the code. This is only used in error messages if you're
 generating a lot of code and an error occurs and you'd like to see the name
 in the error.
 
-=item * C<perltidy>
+=item * C<tidy>
 
-If true, will attempt to run L<Perl::Tidy> on the code between the start and
-end markers. If the value of perltidy is the number 1 (one), then a generic
-pass of L<Perl::Tidy> will be done on the code. If the value is true and
-anything I<other> than one, this is assumed to be the path to a F<.perltidyrc>
-file and that will be used to tidy the code (or C<croak()> if the
-F<.perltidyrc> file cannot be found).
+If true, will attempt to tidy the C<protected_code> block (the rest of the
+code is ignored).  For Perl, if the value of perltidy is the number 1 (one),
+then a generic pass of L<Perl::Tidy> will be done on the code. If the value is
+true and anything I<other> than one, this is assumed to be the path to a
+F<.perltidyrc> file and that will be used to tidy the code (or C<croak()> if
+the F<.perltidyrc> file cannot be found).
 
 =item * C<overwrite>
 
@@ -171,11 +204,11 @@ There are two modes: "Creation" and "Rewrite."
 =head2 Creation Mode
 
     my $rewrite = CodeGen::Protection::Perl->new(
-        injected_code => $text,
+        protected_code => $text,
     );
     say $rewrite->rewritten;
 
-If you create an instance with C<injected_code> but not old text, this will wrap
+If you create an instance with C<protected_code> but not old text, this will wrap
 the new text in start and end tags that "protect" the document if you rewrite
 it:
 
@@ -186,7 +219,7 @@ it:
         return $total;
     }
     END
-    my $rewrite = CodeGen::Protection::Perl->new( injected_code => $perl );
+    my $rewrite = CodeGen::Protection::Perl->new( protected_code => $perl );
     say $rewrite->rewritten;
 
 Output:
@@ -222,16 +255,16 @@ The rest of the document will be ignored.
 
     my $rewrite = CodeGen::Protection::Perl->new(
         existing_code => $existing_code,
-        injected_code => $injected_code,
+        protected_code => $protected_code,
     );
     say $rewrite->rewritten;
 
 In the above, assuming that C<$existing_code> is a rewritable document, the
-C<$injected_code> will replace the rewritable section of the C<$existing_code>, leaving
+C<$protected_code> will replace the rewritable section of the C<$existing_code>, leaving
 the rest unchanged.
 
-However, if C<$injected_code> is I<also> a rewritable document, then the rewritable
-portion of the C<$injected_code> will be extract and used to replace the rewritable
+However, if C<$protected_code> is I<also> a rewritable document, then the rewritable
+portion of the C<$protected_code> will be extract and used to replace the rewritable
 portion of the C<$existing_code>.
 
 So for the code shown in the "Creation mode" section, you could add more code
@@ -276,7 +309,7 @@ into the C<$existing_code> variable and then:
         return $total;
     }
     END
-    my $rewrite = CodeGen::Protection::Perl->new( existing_code => $existing_code, injected_code => $perl );
+    my $rewrite = CodeGen::Protection::Perl->new( existing_code => $existing_code, protected_code => $perl );
     say $rewrite->rewritten;
 
 And that will print out:
@@ -311,3 +344,8 @@ And that will print out:
 
 You can see that the code between the start and end checksum comments and been
 rewritten, while the rest of the code remains unchanged.
+
+=head1 ACKNOWLEDGEMENTS
+
+We would like to thank L<All Around the World|https://allaroundtheworld.fr/>
+for sponsoring this work.

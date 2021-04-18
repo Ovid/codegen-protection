@@ -24,7 +24,7 @@ sub sum {
 #>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 END
 
-my $injected_code = <<'END';
+my $protected_code = <<'END';
 sub sum {
     my $total = 0;
     $total += $_ foreach @_;
@@ -34,8 +34,8 @@ END
 
 throws_ok {
     CodeGen::Protection::Format::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
+        existing_code  => $existing_code,
+        protected_code => $protected_code,
     )
 }
 qr/\QStart digest (aa97a021bd70bf3b9fa3e52f203f2660) does not match end digest (fa97a021bd70bf3b9fa3e52f203f2660)/,
@@ -49,14 +49,14 @@ sub sum {
 }
 END
 
-$injected_code = <<'END';
+$protected_code = <<'END';
 sub sum { my $total = 0; $total += $_ foreach @_; return $total; }
 END
 
 throws_ok {
     CodeGen::Protection::Format::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
+        existing_code  => $existing_code,
+        protected_code => $protected_code,
     )
 }
 qr/Could not find the Perl start and end markers in text/,
@@ -78,14 +78,14 @@ sub sum {
 my $foo = 1;
 END
 
-$injected_code = <<'END';
-my $injected_code = foo();
+$protected_code = <<'END';
+my $protected_code = foo();
 END
 
 throws_ok {
     CodeGen::Protection::Format::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
+        existing_code  => $existing_code,
+        protected_code => $protected_code,
     )
 }
 qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match text/,
@@ -94,9 +94,9 @@ qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match text/,
 my $rewrite;
 lives_ok {
     $rewrite = CodeGen::Protection::Format::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
-        overwrite     => 1,
+        existing_code  => $existing_code,
+        protected_code => $protected_code,
+        overwrite      => 1,
     )
 }
 'We should be able to force an overwrite of code if the checksums do not match';
@@ -104,11 +104,11 @@ lives_ok {
 my $expected = <<'END';
 my $bar = 1;
 
-#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: df10700d59c3058bb3cf2d1c06169063
+#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: bc6f3064e7db2fe8e1628087989bfad6
 
-my $injected_code = foo();
+my $protected_code = foo();
 
-#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: df10700d59c3058bb3cf2d1c06169063
+#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: bc6f3064e7db2fe8e1628087989bfad6
 
 my $foo = 1;
 END

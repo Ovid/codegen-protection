@@ -20,9 +20,9 @@ my $sample = <<'END';
 END
 
 ok my $rewritten = create_protected_code(
-    type          => 'HTML',
-    injected_code => $sample,
-    tidy          => 1,
+    type           => 'HTML',
+    protected_code => $sample,
+    tidy           => 1,
   ),
   'We should be able to create some code to inject';
 
@@ -40,14 +40,13 @@ END
 is_multiline_text $rewritten, $expected,
   '... and we should get our rewritten document back with start and end markers';
 
-
 # saving this for use later
 my $full_document_with_before_and_after_text
   = "<p>this is before</p>\n$expected\n<p>this is after</p>";
 
 $rewritten = "<p>before</p>\n\n$rewritten\n<p>after</p>";
 
-my $injected_code = <<'END';
+my $protected_code = <<'END';
 <pre><tt>
     class Foo {
         has $x;
@@ -56,9 +55,9 @@ my $injected_code = <<'END';
 END
 
 ok $rewritten = rewrite_code(
-    type          => 'HTML',
-    existing_code => $rewritten,
-    injected_code => $injected_code,
+    type           => 'HTML',
+    existing_code  => $rewritten,
+    protected_code => $protected_code,
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
 
