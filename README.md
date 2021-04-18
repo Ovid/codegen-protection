@@ -4,7 +4,7 @@ CodeGen::Protection - Safely rewrite parts of generated code
 
 # VERSION
 
-version 0.01
+version 0.02
 
 # SYNOPSIS
 
