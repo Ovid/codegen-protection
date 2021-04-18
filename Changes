@@ -1,4 +1,4 @@
 {{$NEXT}}
 
-          -  A simple module to allow you to safely rewrite Perl docs on the
-             fly
+          -  Allows devs to create rewritable auto-generated documents in Perl
+             and HTML. Other formats will be supported later.
