@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+          - Main docs rewritten to remove OO interface references
+          - Credit MST's schema loader work as the original inspiration
+
 0.02      2021-04-18 10:22:06 CEST
 
           - Update the main docs to explain create_protected_code()
