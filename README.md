@@ -97,6 +97,19 @@ Functions are exportable on-demand, or both can be exported via `:all`.
         protected_code => $text_of_code,
     );
 
+Takes the code in `$text_of_code` and adds start and end markers to it.
+
+## `rewrite_code`
+
+    my $protected_code = create_protected_code(
+        type           => 'Perl',
+        protected_code => $protected_code,
+        existing_code  => $existing_code,
+    );
+
+Replaces the code in the protected block of `$existing_code` with the code
+from `$protected_code`.
+
 ### ARGUMENTS
 
 Both `create_protected_code` and `rewrite_code` take the same arguments,
