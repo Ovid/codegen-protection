@@ -4,7 +4,7 @@ CodeGen::Protection - Safely rewrite parts of generated code
 
 # VERSION
 
-version 0.04
+version 0.05
 
 # SYNOPSIS
 
@@ -45,11 +45,11 @@ In short, we wrap your "protected" (`protected_code`) code in start and end
 comments, with checksums for the code:
 
 ```
-#<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 # protected code goes here
 
-#>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 ```
 
 Or:

@@ -99,11 +99,11 @@ partial rewrite of documents. At the present time, we support Perl and HTML.
 In short, we wrap your "protected" (C<protected_code>) code in start and end
 comments, with checksums for the code:
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
     
     # protected code goes here
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+    #>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 Or:
 
