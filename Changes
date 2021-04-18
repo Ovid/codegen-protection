@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.03      2021-04-18 10:39:31 CEST
+
           - Main docs rewritten to remove OO interface references
           - Credit MST's schema loader work as the original inspiration
 
