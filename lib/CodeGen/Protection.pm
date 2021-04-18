@@ -154,6 +154,19 @@ Functions are exportable on-demand, or both can be exported via C<:all>.
         protected_code => $text_of_code,
     );
 
+Takes the code in C<$text_of_code> and adds start and end markers to it.
+
+=head2 C<rewrite_code>
+
+    my $protected_code = create_protected_code(
+        type           => 'Perl',
+        protected_code => $protected_code,
+        existing_code  => $existing_code,
+    );
+
+Replaces the code in the protected block of C<$existing_code> with the code
+from C<$protected_code>.
+
 =head3 ARGUMENTS
 
 Both C<create_protected_code> and C<rewrite_code> take the same arguments,

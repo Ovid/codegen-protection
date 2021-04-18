@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+          - Update the main docs to explain create_protected_code()
+
 0.01      2021-04-18 10:01:29 CEST
 
           -  Allows devs to create rewritable auto-generated documents in Perl
