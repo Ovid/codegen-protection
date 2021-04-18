@@ -45,11 +45,11 @@ sub _tidy {
 # end marker.
 
 sub _start_marker_format {
-    '#<<< CodeGen::Protection::Format::Perl %s. Do not touch any code between this and the end comment. Checksum: %s';
+    '#<<< %s %s. Do not touch any code between this and the end comment. Checksum: %s';
 }
 
 sub _end_marker_format {
-    '#>>> CodeGen::Protection::Format::Perl %s. Do not touch any code between this and the start comment. Checksum: %s';
+    '#>>> %s %s. Do not touch any code between this and the start comment. Checksum: %s';
 }
 
 1;

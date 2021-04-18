@@ -17,12 +17,12 @@ use CodeGen::Protection::Types qw(
 
 our $VERSION   = '0.01';
 our @EXPORT_OK = qw(
-  create_injected_code
+  create_protected_code
   rewrite_code
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
-sub create_injected_code {
+sub create_protected_code {
     state $check = compile_named(
         type          => NonEmptyStr,
         injected_code => NonEmptyStr,
@@ -65,16 +65,22 @@ __END__
 
 =head1 SYNOPSIS
 
-    my $rewrite = CodeGen::Protection::Perl->new(
-        injected_code => $text,
-    );
-    say $rewrite->rewritten;
+    use CodeGen::Protection qw(:all);
 
-    my $rewrite = CodeGen::Protection::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
+    # Creating a new document:
+
+    my $perl = create_protected_code(
+        type          => 'Perl',
+        injected_code => $sample,
     );
-    say $rewrite->rewritten;
+
+    # Or rewriting:
+
+    my $rewritten = rewrite_code(
+        type          => 'Perl',
+        existing_code => $perl,
+        injected_code => $rewritten_code,
+    );
 
 =head1 DESCRIPTION
 
@@ -94,22 +100,29 @@ end comments, with checksums for the code:
 
     #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
-If C<existing_code> is provided, this module removes the code between the old
-code's start and end markers and replaces it with the C<injected_code>. If
-the code between the start and end markers has been altered, it will no longer
-match the checksums and rewriting the code will fail.
+If C<rewrite_code>, this module removes the code between the
+C<existing_code>'s start and end markers and replaces it with the
+C<injected_code>. If the code between the start and end markers has been
+altered, it will no longer match the checksums and rewriting the code will
+fail.
 
-=head1 CONSTRUCTOR
+=head1 FUNCTIONS
 
-    my $rewrite = CodeGen::Protection::Perl->new(
-        injected_code => $injected_code,    # required
-        existing_code => $existing_code,    # optional
-        perltidy      => 1,                 # optional
-        name          => $name,             # optional
-        overwrite     => 0,                 # optional
-    );
+Functions are exportable on-demand, or both can be exported via C<:all>.
 
-The constructor only requires that C<injected_code> be passed in.
+    use CodeGen::Protection qw(rewrite_code);
+    use CodeGen::Protection qw(:all);
+
+=head2 C<create_protected_code>
+
+    my $protected_code = create_protected_code(
+        type => 'Perl',
+
+
+=head3 ARGUMENTS
+
+Both C<create_protected_code> and C<rewrite_code> take the same arguments,
+except that C<rewrite_code> does not allow the C<injected_code> argument.
 
 =over 4
 

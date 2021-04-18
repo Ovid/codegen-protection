@@ -14,11 +14,11 @@ sub _tidy {
 }
 
 sub _start_marker_format {
-    '<!-- CodeGen::Protection::Format::HTML %s. Do not touch any code between this and the end comment. Checksum: %s -->';
+    '<!-- %s %s. Do not touch any code between this and the end comment. Checksum: %s -->';
 }
 
 sub _end_marker_format {
-    '<!-- CodeGen::Protection::Format::HTML %s. Do not touch any code between this and the start comment. Checksum: %s -->';
+    '<!-- %s %s. Do not touch any code between this and the start comment. Checksum: %s -->';
 }
 
 1;

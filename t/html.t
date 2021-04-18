@@ -19,7 +19,7 @@ my $sample = <<'END';
     </ol>
 END
 
-ok my $rewritten = create_injected_code(
+ok my $rewritten = create_protected_code(
     type          => 'HTML',
     injected_code => $sample,
     tidy          => 1,

@@ -177,15 +177,16 @@ sub _extract_body {
 #
 
 sub _regex_to_match_rewritten_document {
-    my $class = shift;
+    my $self = shift;
+    my $class = ref $self || $self;
 
     my $digest_start_re = qr/(?<digest_start>[0-9a-f]{32})/;
     my $digest_end_re   = qr/(?<digest_end>[0-9a-f]{32})/;
     my $start_marker_re
-      = sprintf $class->_start_marker_format => $class->_version_re,
+      = sprintf $class->_start_marker_format => $class,$class->_version_re,
       $digest_start_re;
     my $end_marker_re
-      = sprintf $class->_end_marker_format => $class->_version_re,
+      = sprintf $class->_end_marker_format => $class, $class->_version_re,
       $digest_end_re;
 
     # don't use the /x modifier to make this prettier unless you call
@@ -202,12 +203,13 @@ sub _get_checksum {
 
 sub _add_checksums {
     my ( $self, $text ) = @_;
+    my $class = ref $self || $self;
     $text = $self->_remove_all_leading_and_trailing_blank_lines(
         $self->_tidy($text) );
     my $checksum = $self->_get_checksum($text);
-    my $start    = sprintf $self->_start_marker_format => $self->VERSION,
+    my $start    = sprintf $self->_start_marker_format => $class, $self->_get_version,
       $checksum;
-    my $end = sprintf $self->_end_marker_format => $self->VERSION, $checksum;
+    my $end = sprintf $self->_end_marker_format => $class, $self->_get_version, $checksum;
 
     return <<"END";
 $start
@@ -237,33 +239,53 @@ sub _remove_all_leading_and_trailing_blank_lines {
     return return join "\n" => @lines;
 }
 
+sub _get_version {
+    my $self       = shift;
+    my $version_re = $self->_version_re;
+    my $version    = $self->VERSION;
+    if ( defined $version && $version =~ /$version_re/ ) {
+        return $version;
+    }
+    my $class = ref $self || $self;
+    if ( !defined $version ) {
+        croak("$class does not define a VERSION");
+    }
+    else {
+        croak("$class version '$version' does not match '$version_re'");
+    }
+}
+
+sub _tidy {
+    # by default, we do not tidy code unless it's overridden in the child
+    my ( $self, $code ) = @_;
+    return $code;
+}
+
 1;
 
 __END__
 
 =head1 SYNOPSIS
 
-    my $rewrite = CodeGen::Protection::Format::Perl->new(
-        injected_code => $text,
-    );
-    say $rewrite->rewritten;
+    package CodeGen::Protection::Format::MyDocumentType;
+    use Moo;
+    with 'CodeGen::Protection::Role';
 
-    my $rewrite = CodeGen::Protection::Format::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
-    );
-    say $rewrite->rewritten;
+    our $VERSION = '0.01';    # required
+
+    sub _tidy                {...}
+    sub _start_marker_format {...}
+    sub _end_marker_format   {...}
+
+    1;
 
 =head1 DESCRIPTION
 
-This module allows you to do a safe partial rewrite of documents. If you're
-familiar with L<DBIx::Class::Schema::Loader>, you probably know the basic
-concept.
+This role allows you to easily define modules that allow you to do a safe
+partial rewrite of documents. If you're familiar with
+L<DBIx::Class::Schema::Loader>, you probably know the basic concept.
 
-Note that this code is designed for Perl documents and is not very
-configurable.
-
-In short, we wrap your "protected" (C<injected_code>) Perl code in start and
+In short, we wrap your "protected" (C<injected_code>) code in start and
 end comments, with checksums for the code:
 
     #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
@@ -272,207 +294,92 @@ end comments, with checksums for the code:
 
     #>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
-If C<existing_code> is provided, this module removes the code between the old
-code's start and end markers and replaces it with the C<injected_code>. If
-the code between the start and end markers has been altered, it will no longer
-match the checksums and rewriting the code will fail.
+See L<CodeGen::Protection::Format::Perl> for full documentation of the OO
+interface, and L<CodeGen::Protection> for full documentation of the
+recommended interface.
 
-=head1 CONSTRUCTOR
+# Creating A New Protected Format
 
-    my $rewrite = CodeGen::Protection::Format::Perl->new(
-        injected_code => $injected_code,    # required
-        existing_code => $existing_code,    # optional
-        perltidy      => 1,                 # optional
-        name          => $name,             # optional
-        overwrite     => 0,                 # optional
-    );
+Note that this module is I<not> suitable for protecting documents which
+require context outside of the protected area. JSON and YAML would be good
+examples of document types which are probably not suitable for this code.
 
-The constructor only requires that C<injected_code> be passed in.
+Javascript, however, is excellent.
+
+To create a new protected document package, you:
 
 =over 4
 
-=item * C<injected_code>
+=item * Create the package
 
-This is a required string containing any new Perl code to be built with this
-tool. If C<injected_code> is passed in an C<existing_code> is not, we're in "Creation
-mode" (see L<#Modes>) and the new Perl code must I<not> have start and end
-markers generated by this tool.
+=item * Consume the L<CodeGen::Protection::Role> role
 
-=item * C<existing_code>
+=item * Set the C<$VERSION> (in C<\d+.\d+> format)
 
-This is an optional string containing Perl code  already built with this tool.
-If provided, this code I<must> have the start and end markers generated by
-this tool so that the rewriter knows the section of code to replace with the
-injected code.
+=item * Define C<_start_marker_format>, and C<_end_marker_format> methods
 
-=item * C<name>
-
-Optional name for the code. This is only used in error messages if you're
-generating a lot of code and an error occurs and you'd like to see the name
-in the error.
-
-=item * C<perltidy>
-
-If true, will attempt to run L<Perl::Tidy> on the code between the start and
-end markers. If the value of perltidy is the number 1 (one), then a generic
-pass of L<Perl::Tidy> will be done on the code. If the value is true and
-anything I<other> than one, this is assumed to be the path to a F<.perltidyrc>
-file and that will be used to tidy the code (or C<croak()> if the
-F<.perltidyrc> file cannot be found).
-
-=item * C<overwrite>
-
-Optional boolean, default false. In "Rewrite mode", if the checksum in the
-start and end markers doesn't match the code within them, someone has manually
-altered that code and we do not automatically overwrite it (in fact, we
-C<croak()>). Setting C<overwrite> to true will cause it to be overwritten.
+=item * Optionally define a C<_tidy> method.
 
 =back
 
-=head1 MODES
+And that's it!
 
-There are two modes: "Creation" and "Rewrite."
+Let's see a concrete example using Javascript.
 
-=head2 Creation Mode
+First, define the package:
 
-    my $rewrite = CodeGen::Protection::Format::Perl->new(
-        injected_code => $text,
+    package CodeGen::Protection::Format::Javascript;
+    use Moo;
+
+Consume the role:
+
+    with 'CodeGen::Protection::Role';
+
+Set the version:
+
+    our $VERSION = '0.01';    # required
+
+Declare our start and end marker formats:
+
+    sub _start_marker_format {
+        '// %s %s. Do not touch any code between this and the end comment. Checksum: %s';
+    }
+
+    sub _end_marker_format {
+        '// %s %s. Do not touch any code between this and the start comment. Checksum: %s';
+    }
+
+And if you have code that can tidy Javascript, you can declare a C<_tidy> method:
+
+    sub _tidy {
+        my ( $self, $document ) = @_;
+        my $tidied = ... return $tidied;
+    }
+
+Regarding the start and end formats. They're separate in case we have a
+document type which requires separate formats. Also, for both the
+C<_start_marker_format()> and the C<_end_marker_format()>, the first '%s' is
+the class name and the second '%s' is version number if they're being added to
+the document. The second '%s' is a version regex (C<_version_re()>) if it's
+being used to match the start or end marker.
+
+The third '%s' is the md5 sum if it's being added to the document.  It's a
+captured md5 regex (C<[0-9a-f]{32}>) if it's being used to match the start or
+end marker.
+
+And that's it! You can now read/write protected Javascript documents:
+
+Creating:
+
+    my $javascript = create_protected_code(
+        type          => 'Javascript',
+        injected_code => $sample,
     );
-    say $rewrite->rewritten;
 
-If you create an instance with C<injected_code> but not old text, this will wrap
-the new text in start and end tags that "protect" the document if you rewrite
-it:
+Or rewriting:
 
-    my $perl = <<'END';
-    sub sum {
-        my $total = 0;
-        $total += $_ foreach @_;
-        return $total;
-    }
-    END
-    my $rewrite = CodeGen::Protection::Format::Perl->new( injected_code => $perl );
-    say $rewrite->rewritten;
-
-Output:
-
-    #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
-
-    sub sum {
-        my $total = 0;
-        $total += $_ foreach @_;
-        return $total;
-    }
-
-    #>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
-
-You can then take the marked up document and insert it into another Perl
-document and use the rewrite mode to safely rewrite the code between the start
-and end markers. The rest of the document will be ignored.
-
-Note that leading and trailing comments start with C<< #<<< >> and C<< #>>> >>
-respectively. Those are special comments which tell L<Perl::Tidy> to ignore
-what ever is between them. Thus, you can safely tidy code written with this.
-
-The start and end checksums are the same and are the checksum of the text
-between the comments. Leading and trailing lines which are all whitespace are
-removed and one leading and one trailing newline will be added.
-
-=head2 Rewrite Mode
-
-Given a document created with the "Creating" mode, you can then take the
-marked up document and insert it into another Perl document and use the
-rewrite mode to safely rewrite the code between the start and end markers.
-The rest of the document will be ignored.
-
-    my $rewrite = CodeGen::Protection::Format::Perl->new(
-        existing_code => $existing_code,
-        injected_code => $injected_code,
+    my $javascript = create_protected_code(
+        type          => 'Javascript',
+        existing_code => $javascript,
+        injected_code => $rewritten_code,
     );
-    say $rewrite->rewritten;
-
-In the above, assuming that C<$existing_code> is a rewritable document, the
-C<$injected_code> will replace the rewritable section of the C<$existing_code>, leaving
-the rest unchanged.
-
-However, if C<$injected_code> is I<also> a rewritable document, then the rewritable
-portion of the C<$injected_code> will be extract and used to replace the rewritable
-portion of the C<$existing_code>.
-
-So for the code shown in the "Creation mode" section, you could add more code
-like this:
-
-    package My::Package;
-
-    use strict;
-    use warnings;
-
-    sub average {
-        return sum(@_)/@_;
-    }
-
-    #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
-
-    sub sum {
-        my $total = 0;
-        $total += $_ foreach @_;
-        return $total;
-    }
-
-    #>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
-    
-    1;
-
-However, later on I might realize that the C<sum> function will happily try to
-sum things which are not numbers, so I want to fix that. I'll slurp the C<My::Package> code
-into the C<$existing_code> variable and then:
-
-    my $perl = <<'END';
-    use Scalar::Util 'looks_like_number';
-
-    sub sum {
-        my $total = 0;
-        foreach my $number (@_) {
-            unless (looks_like_number($number)) {
-                die "'$number' doesn't look like a numbeer!";
-            }
-            $total += $number;
-        }
-        return $total;
-    }
-    END
-    my $rewrite = CodeGen::Protection::Format::Perl->new( existing_code => $existing_code, injected_code => $perl );
-    say $rewrite->rewritten;
-
-And that will print out:
-
-    package My::Package;
-    
-    use strict;
-    use warnings;
-    
-    sub average {
-        return sum(@_)/@_;
-    }
-    
-    #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
-    
-    use Scalar::Util 'looks_like_number';
-    
-    sub sum {
-        my $total = 0;
-        foreach my $number (@_) {
-            unless (looks_like_number($number)) {
-                die "'$number' doesn't look like a numbeer!";
-            }
-            $total += $number;
-        }
-        return $total;
-    }
-    
-    #>>> CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
-    
-    1;
-
-You can see that the code between the start and end checksum comments and been
-rewritten, while the rest of the code remains unchanged.
