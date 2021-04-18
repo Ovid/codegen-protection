@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+          - Update dist.ini to produce proper Github flavored markdown
+
 0.03      2021-04-18 10:39:31 CEST
 
           - Main docs rewritten to remove OO interface references

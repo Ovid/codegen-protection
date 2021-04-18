@@ -4,26 +4,28 @@ CodeGen::Protection - Safely rewrite parts of generated code
 
 # VERSION
 
-version 0.03
+version 0.04
 
 # SYNOPSIS
 
-    use CodeGen::Protection qw(:all);
+```perl
+use CodeGen::Protection qw(:all);
 
-    # Creating a new document:
+# Creating a new document:
 
-    my $perl = create_protected_code(
-        type           => 'Perl',
-        protected_code => $sample,
-    );
+my $perl = create_protected_code(
+    type           => 'Perl',
+    protected_code => $sample,
+);
 
-    # Or rewriting:
+# Or rewriting:
 
-    my $rewritten = rewrite_code(
-        type           => 'Perl',
-        existing_code  => $perl,
-        protected_code => $rewritten_code,
-    );
+my $rewritten = rewrite_code(
+    type           => 'Perl',
+    existing_code  => $perl,
+    protected_code => $rewritten_code,
+);
+```
 
 # DESCRIPTION
 
@@ -42,22 +44,26 @@ partial rewrite of documents. At the present time, we support Perl and HTML.
 In short, we wrap your "protected" (`protected_code`) code in start and end
 comments, with checksums for the code:
 
-    #<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
-    
-    # protected code goes here
+```
+#<<< CodeGen::Protection::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
-    #>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+# protected code goes here
+
+#>>> CodeGen::Protection::Perl 0.01. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+```
 
 Or:
 
-    <!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the end comment. Checksum: c286b9b2577e085df857227eae996c40 -->
-    
-        <ol>
-          <li>This is a list</li>
-          <li>This is the second entry.</li>
-        </ol>
-    
-    <!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the start comment. Checksum: c286b9b2577e085df857227eae996c40 -->
+```
+<!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the end comment. Checksum: c286b9b2577e085df857227eae996c40 -->
+
+    <ol>
+      <li>This is a list</li>
+      <li>This is the second entry.</li>
+    </ol>
+
+<!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the start comment. Checksum: c286b9b2577e085df857227eae996c40 -->
+```
 
 If calling the `rewrite_code` function, this module removes the code between
 the `existing_code`'s start and end markers and replaces it with the
@@ -69,17 +75,19 @@ fail.
 
 As of this writing, we can protect Perl and HTML:
 
-    my $rewritten = rewrite_code(
-        type           => 'Perl',
-        existing_code  => $perl,
-        protected_code => $protected_code,
-    );
+```perl
+my $rewritten = rewrite_code(
+    type           => 'Perl',
+    existing_code  => $perl,
+    protected_code => $protected_code,
+);
 
-    my $rewritten = rewrite_code(
-        type           => 'HTML',
-        existing_code  => $HTML,
-        protected_code => $protected_code,
-    );
+my $rewritten = rewrite_code(
+    type           => 'HTML',
+    existing_code  => $HTML,
+    protected_code => $protected_code,
+);
+```
 
 See [CodeGen::Protection::Role](https://metacpan.org/pod/CodeGen::Protection::Role) to learn how to create your own types to protect.
 
@@ -87,25 +95,31 @@ See [CodeGen::Protection::Role](https://metacpan.org/pod/CodeGen::Protection::Ro
 
 Functions are exportable on-demand, or both can be exported via `:all`.
 
-    use CodeGen::Protection qw(rewrite_code);
-    use CodeGen::Protection qw(:all);
+```perl
+use CodeGen::Protection qw(rewrite_code);
+use CodeGen::Protection qw(:all);
+```
 
 ## `create_protected_code`
 
-    my $protected_code = create_protected_code(
-        type           => 'Perl',
-        protected_code => $text_of_code,
-    );
+```perl
+my $protected_code = create_protected_code(
+    type           => 'Perl',
+    protected_code => $text_of_code,
+);
+```
 
 Takes the code in `$text_of_code` and adds start and end markers to it.
 
 ## `rewrite_code`
 
-    my $protected_code = create_protected_code(
-        type           => 'Perl',
-        protected_code => $protected_code,
-        existing_code  => $existing_code,
-    );
+```perl
+my $protected_code = create_protected_code(
+    type           => 'Perl',
+    protected_code => $protected_code,
+    existing_code  => $existing_code,
+);
+```
 
 Replaces the code in the protected block of `$existing_code` with the code
 from `$protected_code`.
@@ -155,33 +169,39 @@ There are two modes: "Creation" and "Rewrite."
 
 ## Creation Mode
 
-    my $protected_code = create_protected_code(
-        protected_code => $text,
-    );
+```perl
+my $protected_code = create_protected_code(
+    protected_code => $text,
+);
+```
 
 This will wrap the new text in start and end tags that "protect" the document
 if you rewrite it:
 
-    my $perl = <<'END';
-    sub sum {
-        my $total = 0;
-        $total += $_ foreach @_;
-        return $total;
-    }
-    END
-    my $protected_code = protected_code( protected_code => $perl );
+```perl
+my $perl = <<'END';
+sub sum {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
+END
+my $protected_code = create_protected_code( protected_code => $perl );
+```
 
 Result:
 
-    #<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+```perl
+#<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
-    sub sum {
-        my $total = 0;
-        $total += $_ foreach @_;
-        return $total;
-    }
+sub sum {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
 
-    #>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+```
 
 You can then take the marked up document and insert it into another Perl
 document and use the rewrite mode to safely rewrite the code between the start
@@ -202,10 +222,12 @@ marked up document and insert it into another Perl document and use the
 rewrite mode to safely rewrite the code between the start and end markers.
 The rest of the document will be ignored.
 
-    my $rewrite = rewrite_code(
-        existing_code  => $existing_code,
-        protected_code => $protected_code,
-    );
+```perl
+my $rewrite = rewrite_code(
+    existing_code  => $existing_code,
+    protected_code => $protected_code,
+);
+```
 
 In the above, assuming that `$existing_code` is a rewritable document, the
 `$protected_code` will replace the rewritable section of the `$existing_code`, leaving
@@ -218,76 +240,82 @@ portion of the `$existing_code`.
 So for the code shown in the "Creation mode" section, you could add more code
 like this:
 
-    package My::Package;
+```perl
+package My::Package;
 
-    use strict;
-    use warnings;
+use strict;
+use warnings;
 
-    sub average {
-        return sum(@_)/@_;
-    }
+sub average {
+    return sum(@_)/@_;
+}
 
-    #<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+#<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
-    sub sum {
-        my $total = 0;
-        $total += $_ foreach @_;
-        return $total;
-    }
+sub sum {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
 
-    #>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
-    
-    1;
+#>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
+
+1;
+```
 
 However, later on I might realize that the `sum` function will happily try to
 sum things which are not numbers, so I want to fix that. I'll slurp the
 `My::Package` code into the `$existing_code` variable and then:
 
-    my $perl = <<'END';
-    use Scalar::Util 'looks_like_number';
+```perl
+my $perl = <<'END';
+use Scalar::Util 'looks_like_number';
 
-    sub sum {
-        my $total = 0;
-        foreach my $number (@_) {
-            unless (looks_like_number($number)) {
-                die "'$number' doesn't look like a numbeer!";
-            }
-            $total += $number;
+sub sum {
+    my $total = 0;
+    foreach my $number (@_) {
+        unless (looks_like_number($number)) {
+            die "'$number' doesn't look like a numbeer!";
         }
-        return $total;
+        $total += $number;
     }
-    END
-    my $rewrite = rewrite_code( existing_code => $existing_code, protected_code => $perl );
+    return $total;
+}
+END
+my $rewrite = rewrite_code( existing_code => $existing_code, protected_code => $perl );
+```
 
 And that will result in:
 
-    package My::Package;
-    
-    use strict;
-    use warnings;
-    
-    sub average {
-        return sum(@_)/@_;
-    }
-    
-    #<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
-    
-    use Scalar::Util 'looks_like_number';
-    
-    sub sum {
-        my $total = 0;
-        foreach my $number (@_) {
-            unless (looks_like_number($number)) {
-                die "'$number' doesn't look like a numbeer!";
-            }
-            $total += $number;
+```perl
+package My::Package;
+
+use strict;
+use warnings;
+
+sub average {
+    return sum(@_)/@_;
+}
+
+#<<< CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the end comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
+
+use Scalar::Util 'looks_like_number';
+
+sub sum {
+    my $total = 0;
+    foreach my $number (@_) {
+        unless (looks_like_number($number)) {
+            die "'$number' doesn't look like a numbeer!";
         }
-        return $total;
+        $total += $number;
     }
-    
-    #>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
-    
-    1;
+    return $total;
+}
+
+#>>> CodeGen::Protection::Format::Perl 0.03. Do not touch any code between this and the start comment. Checksum: d135a051f158ee19fbd68af5466fb1ae
+
+1;
+```
 
 You can see that the code between the start and end checksum comments and been
 rewritten, while the rest of the code remains unchanged.

@@ -230,7 +230,7 @@ if you rewrite it:
         return $total;
     }
     END
-    my $protected_code = protected_code( protected_code => $perl );
+    my $protected_code = create_protected_code( protected_code => $perl );
 
 Result:
 
