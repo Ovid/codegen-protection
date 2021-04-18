@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+          - Add Perl::Tidy to the prereqs. Thanks for eserte for spotting
+            this. This fixes https://github.com/Ovid/codegen-protection/issues/1
           - Update dist.ini to produce proper Github flavored markdown
 
 0.03      2021-04-18 10:39:31 CEST
