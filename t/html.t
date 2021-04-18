@@ -1,16 +1,9 @@
 #!/usr/bin/env perl
 
-use lib 'lib';
+use lib 'lib', 't/lib';
 use Test::Most;
+use Test::CodeGen::Helpers;
 use CodeGen::Protection ':all';
-
-sub is_multiline_text ($$$) {
-    my ( $text, $expected, $message ) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my @text     = split /\n/ => $text;
-    my @expected = split /\n/ => $expected;
-    eq_or_diff \@text, \@expected, $message;
-}
 
 my $sample = <<'END';
     <ol>
@@ -26,7 +19,7 @@ ok my $rewritten = create_protected_code(
   ),
   'We should be able to create some code to inject';
 
-my $expected = <<'END';
+my $expected = update_version(<<'END');
 <!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the end comment. Checksum: c286b9b2577e085df857227eae996c40 -->
 
     <ol>
@@ -61,7 +54,7 @@ ok $rewritten = rewrite_code(
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
 
-$expected = <<'END';
+$expected = update_version(<<'END');
 <p>before</p>
 
 <!-- CodeGen::Protection::Format::HTML 0.01. Do not touch any code between this and the end comment. Checksum: e671340080c546070ce6c5c9cf7171af -->

@@ -1,6 +1,7 @@
 {{$NEXT}}
 
           - Update the main docs to explain create_protected_code()
+          - Tests are no longer as sensitive to version number changes
 
 0.01      2021-04-18 10:01:29 CEST
 

@@ -1,16 +1,9 @@
 #!/usr/bin/env perl
 
-use lib 'lib';
+use lib 'lib', 't/lib';
 use Test::Most;
+use Test::CodeGen::Helpers;
 use CodeGen::Protection ':all';
-
-sub is_multiline_text ($$$) {
-    my ( $text, $expected, $message ) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my @text     = split /\n/ => $text;
-    my @expected = split /\n/ => $expected;
-    eq_or_diff \@text, \@expected, $message;
-}
 
 my $sample = <<'END';
 sub sum {
@@ -27,7 +20,7 @@ ok my $rewritten = create_protected_code(
   ),
   'We should be able to create some code to inject';
 
-my $expected = <<'END';
+my $expected = update_version(<<'END');
 #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
@@ -61,7 +54,7 @@ ok $rewritten = rewrite_code(
   ),
   'We should be able to rewrite the old Perl with new Perl, but leaving "outside" areas unchanged';
 
-$expected = <<'END';
+$expected = update_version(<<'END');
 before
 
 #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: 2cd05888383961c3a8032c7622d4cf19
@@ -84,7 +77,7 @@ ok $rewritten = rewrite_code(
   ),
   'We should be able to rewrite a document with a "full" new document, only extracting the rewrite portion of the new document.';
 
-$expected = <<'END';
+$expected = update_version(<<'END');
 before
 
 #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: fa97a021bd70bf3b9fa3e52f203f2660
@@ -131,7 +124,7 @@ ok $rewritten = rewrite_code(
   ),
   'The version number of CodeGen::Protection::Format::Perl should not matter when rewriting code;';
 
-$expected = <<'END';
+$expected = update_version(<<'END');
 before
 
 #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: 85aac48abc051a44c83bf11122764e1f

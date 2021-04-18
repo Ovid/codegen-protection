@@ -1,18 +1,12 @@
 #!/usr/bin/env perl
 
-use lib 'lib';
+use lib 'lib', 't/lib';
 use Test::Most;
+use Test::CodeGen::Helpers;
 use CodeGen::Protection::Format::Perl;
+my $version = CodeGen::Protection::Format::Perl->VERSION;
 
-sub is_multiline_text ($$$) {
-    my ( $text, $expected, $message ) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my @text     = split /\n/ => $text;
-    my @expected = split /\n/ => $expected;
-    eq_or_diff \@text, \@expected, $message;
-}
-
-my $existing_code = <<'END';
+my $existing_code = update_version(<<'END');
 #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: aa97a021bd70bf3b9fa3e52f203f2660
 
 sub sum {
@@ -101,7 +95,7 @@ lives_ok {
 }
 'We should be able to force an overwrite of code if the checksums do not match';
 
-my $expected = <<'END';
+my $expected = update_version(<<'END');
 my $bar = 1;
 
 #<<< CodeGen::Protection::Format::Perl 0.01. Do not touch any code between this and the end comment. Checksum: bc6f3064e7db2fe8e1628087989bfad6
