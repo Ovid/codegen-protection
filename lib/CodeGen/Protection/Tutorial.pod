@@ -1,6 +1,4 @@
-=head1 NAME
-
-CodeGen::Protection::Tutorial — What the heck is this thing for?
+# PODNAME: CodeGen::Protection::Tutorial — What the heck is this thing for?
 
 =head1 RATIONALE
 
