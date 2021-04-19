@@ -53,7 +53,7 @@ throws_ok {
         protected_code => $protected_code,
     )
 }
-qr/Could not find the Perl start and end markers in text/,
+qr/Could not find the Perl start and end markers in existing_code/,
   '... or for trying to rewrite Perl without start/end markers in the text';
 
 $existing_code = <<'END';

@@ -53,8 +53,8 @@ sub _rewritten {
 }
 
 sub _use_module {
-    my $type  = shift;
-    my $class = "CodeGen::Protection::Format::$type";
+    my $format  = shift;
+    my $class = "CodeGen::Protection::Format::$format";
     use_module($class);
     return $class;
 }

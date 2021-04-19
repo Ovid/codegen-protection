@@ -112,7 +112,7 @@ sub _extract_before_and_after {
     my $name       = $self->name;
     if ( $text !~ $extract_re ) {
         croak(
-            "Could not find the $type start and end markers in text for $name."
+            "Could not find the $type start and end markers in existing_code for $name."
         );
     }
     my $digest_start = $+{digest_start};
@@ -145,7 +145,7 @@ sub _extract_body {
     my $type       = $self->document_type;
     if ( $text !~ $extract_re ) {
         croak(
-            "Could not find the $type start and end markers in text for $name");
+            "Could not find the $type start and end markers in protected_code for $name");
     }
     my $digest_start = $+{digest_start};
     my $digest_end   = $+{digest_end};
