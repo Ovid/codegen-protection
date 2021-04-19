@@ -157,7 +157,7 @@ this is what the developer has added to the end of that file:
         return My::OpenAPI::Server->list('users');
     }
 
-# REWRITING A DOCUMENT
+=head1 REWRITING A DOCUMENT
 
 Later, someone has added the path for C<GET /users/{userId}> to the OpenAPI
 specification document, so you want to regenerate your code. Now, however, you
@@ -222,7 +222,7 @@ Note that we have I<rewritten> the protected part of this document, but the
 C<sub get {...}> code the developer added has remained. This allows you to
 keep regenerating these documents, but without breaking the existing code.
 
-## Why rewrite_code() might fail
+=head2 Why rewrite_code() might fail
 
 If you run C<rewrite_code()>, it can fail for several reason:
 
@@ -243,7 +243,7 @@ protected code has been changed. This will stop a developer from thinking
 "hey, I want to change C<get_userId> to C<get_user_id>" and thus breaking your
 code.
 
-# TESTING
+=head1 TESTING
 
 Note that C<CodeGen::Protection> manipulates documents (e.g., strings), but
 does no I/O. So let's assume we've written the above document to
