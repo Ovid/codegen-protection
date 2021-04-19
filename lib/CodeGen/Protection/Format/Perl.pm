@@ -6,7 +6,7 @@ use Moo;
 use Carp 'croak';
 with qw(CodeGen::Protection::Role);
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 sub _tidy {
     my ( $self, $code ) = @_;
