@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.05      2021-04-19 10:54:54 CEST
+
           - Added CodeGen::Protection::Tutorial
           - Added Test::CodeGen::Protection
 
