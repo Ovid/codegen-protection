@@ -356,7 +356,8 @@ And if you have code that can tidy Javascript, you can declare a C<_tidy> method
 
     sub _tidy {
         my ( $self, $document ) = @_;
-        my $tidied = ... return $tidied;
+        my $tidied = ...;
+        return $tidied;
     }
 
 Regarding the start and end formats. They're separate in case we have a
@@ -381,7 +382,7 @@ Creating:
 
 Or rewriting:
 
-    my $javascript = create_protected_code(
+    my $javascript = rewrite_code(
         type          => 'Javascript',
         existing_code => $javascript,
         protected_code => $rewritten_code,
