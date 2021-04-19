@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+          - Added CodeGen::Protection::Tutorial
+          - Added Test::CodeGen::Protection
+
 0.04      2021-04-18 11:10:14 CEST
 
           - Add Perl::Tidy to the prereqs. Thanks for eserte for spotting

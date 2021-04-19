@@ -82,7 +82,7 @@ throws_ok {
         protected_code => $protected_code,
     )
 }
-qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match text/,
+qr/\QChecksum (aa97a021bd70bf3b9fa3e52f203f2660) did not match expected checksum (fa97a021bd70bf3b9fa3e52f203f2660)/,
   '... or if our digests do not match the code, we should get an appropriate error';
 
 my $rewrite;

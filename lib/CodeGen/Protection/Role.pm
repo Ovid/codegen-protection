@@ -124,11 +124,10 @@ sub _extract_before_and_after {
         );
     }
 
-    if (  !$self->overwrite
-        && $digest_start ne $self->_get_checksum( $+{body} ) )
-    {
+    my $expected = $self->_get_checksum($+{body});
+    if ( !$self->overwrite && $digest_start ne $expected ) {
         croak(
-            "Checksum ($digest_start) did not match text. Set 'overwrite' to true to ignore this for $type $name"
+            "Checksum ($digest_start) did not match expected checksum ($expected). Set 'overwrite' to true to ignore this for $type $name"
         );
     }
     my $before = $+{before} // '';

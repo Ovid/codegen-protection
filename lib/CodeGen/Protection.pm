@@ -84,6 +84,8 @@ __END__
 
 =head1 DESCRIPTION
 
+If you might find the L<Tutorial|CodeGen::Protection::Tutorial> to be useful.
+
 Code that writes code can be a powerful tool, especially when you need to
 generate lots of boilerplate. However, when a developer takes the generated
 code, they can easily rewrite that code in a way that no longer works, or make

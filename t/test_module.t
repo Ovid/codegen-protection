@@ -47,7 +47,7 @@ subtest 'Valid protected documents with altered code should fail' =>
         {
             ok   => 0,
             name => 'This should fail',
-            diag => qr/Checksum \([0-9a-f]{32}\) did not match text/,
+            diag => qr/Checksum \([0-9a-f]{32}\) did not match expected checksum \([0-9a-f]{32}\)/,
         },
     );
   };
