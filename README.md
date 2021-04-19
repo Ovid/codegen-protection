@@ -4,7 +4,7 @@ CodeGen::Protection - Safely rewrite parts of generated code
 
 # VERSION
 
-version 0.05
+version 0.06
 
 # SYNOPSIS
 
@@ -29,7 +29,8 @@ my $rewritten = rewrite_code(
 
 # DESCRIPTION
 
-If you might find the [Tutorial](https://metacpan.org/pod/CodeGen::Protection::Tutorial) to be useful.
+If this is hard to follow, you might find the
+[Tutorial](https://metacpan.org/pod/CodeGen::Protection::Tutorial) useful.
 
 Code that writes code can be a powerful tool, especially when you need to
 generate lots of boilerplate. However, when a developer takes the generated

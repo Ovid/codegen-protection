@@ -84,7 +84,8 @@ __END__
 
 =head1 DESCRIPTION
 
-If you might find the L<Tutorial|CodeGen::Protection::Tutorial> to be useful.
+If this is hard to follow, you might find the
+L<Tutorial|CodeGen::Protection::Tutorial> useful.
 
 Code that writes code can be a powerful tool, especially when you need to
 generate lots of boilerplate. However, when a developer takes the generated
