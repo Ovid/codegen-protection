@@ -1,6 +1,8 @@
 {{$NEXT}}
 
           - Small tweak to odd tutorial text and role docs.
+          - Fixed a locale-specific test failure. This fixes
+            https://github.com/Ovid/codegen-protection/issues/2
 
 0.05      2021-04-19 10:54:54 CEST
 
