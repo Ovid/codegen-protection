@@ -15,7 +15,7 @@ use CodeGen::Protection::Types qw(
   Optional
 );
 
-our $VERSION = '0.06';
+our $VERSION   = '0.06';
 our @EXPORT_OK = qw(
   create_protected_code
   rewrite_code
@@ -53,8 +53,8 @@ sub _rewritten {
 }
 
 sub _use_module {
-    my $format  = shift;
-    my $class = "CodeGen::Protection::Format::$format";
+    my $format = shift;
+    my $class  = "CodeGen::Protection::Format::$format";
     use_module($class);
     return $class;
 }

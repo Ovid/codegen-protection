@@ -124,7 +124,7 @@ sub _extract_before_and_after {
         );
     }
 
-    my $expected = $self->_get_checksum($+{body});
+    my $expected = $self->_get_checksum( $+{body} );
     if ( !$self->overwrite && $digest_start ne $expected ) {
         croak(
             "Checksum ($digest_start) did not match expected checksum ($expected). Set 'overwrite' to true to ignore this for $type $name"
@@ -144,7 +144,8 @@ sub _extract_body {
     my $type       = $self->document_type;
     if ( $text !~ $extract_re ) {
         croak(
-            "Could not find the $type start and end markers in protected_code for $name");
+            "Could not find the $type start and end markers in protected_code for $name"
+        );
     }
     my $digest_start = $+{digest_start};
     my $digest_end   = $+{digest_end};

@@ -24,7 +24,8 @@ subtest 'Protected documents with valid start and end documents should pass' =>
   sub {
     check_test(
         sub {
-            is_protected_document_ok 'Perl', get_protected_code_sample(), 'This should pass';
+            is_protected_document_ok 'Perl', get_protected_code_sample(),
+              'This should pass';
         },
         {
             ok   => 1,
@@ -34,11 +35,11 @@ subtest 'Protected documents with valid start and end documents should pass' =>
     );
   };
 
-subtest 'Valid protected documents with altered code should fail' =>
-  sub {
+subtest 'Valid protected documents with altered code should fail' => sub {
     my $code = get_protected_code_sample();
 
-    explain 'We have altered the code and this will cause the checksums to not match the body content';
+    explain
+      'We have altered the code and this will cause the checksums to not match the body content';
     $code =~ s/foreach/for/;
     check_test(
         sub {
@@ -47,10 +48,11 @@ subtest 'Valid protected documents with altered code should fail' =>
         {
             ok   => 0,
             name => 'This should fail',
-            diag => qr/Checksum \([0-9a-f]{32}\) did not match expected checksum \([0-9a-f]{32}\)/,
+            diag =>
+              qr/Checksum \([0-9a-f]{32}\) did not match expected checksum \([0-9a-f]{32}\)/,
         },
     );
-  };
+};
 
 subtest 'Testing non-existent files is not fatal' => sub {
     check_test(
@@ -74,9 +76,10 @@ subtest 'Testing valid files with non-protected code should fail' => sub {
             is_protected_document_ok 'Perl', $filename, 'Not protected code';
         },
         {
-            ok => 0,
+            ok   => 0,
             name => 'Not protected code',
-            diag => qr/Could not find the Perl start and end markers in existing_code for document/,
+            diag =>
+              qr/Could not find the Perl start and end markers in existing_code for document/,
         },
     );
 };
@@ -90,5 +93,5 @@ sub get_protected_code_sample {
         $total += $_ foreach @_;
         return $total;
     }';
-   return create_protected_code( type => 'Perl', protected_code => $code );
+    return create_protected_code( type => 'Perl', protected_code => $code );
 }
