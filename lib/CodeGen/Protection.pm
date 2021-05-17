@@ -15,7 +15,7 @@ use CodeGen::Protection::Types qw(
   Optional
 );
 
-our $VERSION   = '0.06';
+our $VERSION = '0.07';
 our @EXPORT_OK = qw(
   create_protected_code
   rewrite_code

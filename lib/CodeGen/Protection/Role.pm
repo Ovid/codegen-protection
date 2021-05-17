@@ -15,7 +15,7 @@ requires qw(
   VERSION
 );
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 has existing_code => (
     is        => 'ro',
