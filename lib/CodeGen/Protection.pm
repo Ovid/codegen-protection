@@ -2,7 +2,7 @@ package CodeGen::Protection;
 
 # ABSTRACT: Safely rewrite parts of generated code
 
-use v5.10.0;    # for named captures in regexes
+use v5.08.0;
 use strict;
 use warnings;
 use base 'Exporter';
@@ -22,19 +22,22 @@ our @EXPORT_OK = qw(
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
-sub create_protected_code {
-    state $check = compile_named(
+{
+    my $check = compile_named(
         type           => NonEmptyStr,
         protected_code => NonEmptyStr,
         tidy           => Optional [Bool],
         name           => Optional [NonEmptyStr],
         overwrite      => Optional [Bool],
     );
-    return _rewritten( $check->(@_) );
+
+    sub create_protected_code {
+        return _rewritten( $check->(@_) );
+    }
 }
 
-sub rewrite_code {
-    state $check = compile_named(
+{
+    my $check = compile_named(
         type           => NonEmptyStr,
         protected_code => NonEmptyStr,
         existing_code  => NonEmptyStr,
@@ -42,7 +45,10 @@ sub rewrite_code {
         name           => Optional [NonEmptyStr],
         overwrite      => Optional [Bool],
     );
-    return _rewritten( $check->(@_) );
+
+    sub rewrite_code {
+        return _rewritten( $check->(@_) );
+    }
 }
 
 sub _rewritten {

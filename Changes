@@ -1,5 +1,6 @@
 {{$NEXT}}
 
+          - Now runs on 5.8.9 (probably 5.8.0 and maybe lower)
           - Small tweak to odd tutorial text and role docs.
           - Fixed a locale-specific test failure. This fixes
             https://github.com/Ovid/codegen-protection/issues/2
